@@ -23,6 +23,7 @@ body {
     color: var(--text);
     text-align: center;
     padding-bottom: 30px;
+    user-select: none;
 }
 
 .container {
@@ -53,8 +54,6 @@ input, select {
     text-align: center;
 }
 
-input:focus { border-color: var(--accent); }
-
 button {
     background: var(--accent);
     color: white;
@@ -64,8 +63,9 @@ button {
     touch-action: manipulation;
 }
 
-button:active { transform: scale(0.98); }
+button:active { transform: scale(0.95); }
 .btn-secondary { background: #333; }
+.btn-danger { background: var(--danger); }
 
 .player-input-row {
     display: flex;
@@ -79,45 +79,42 @@ button:active { transform: scale(0.98); }
     border-radius: 12px;
     font-size: 1.1rem;
     font-weight: bold;
-    margin: 15px 0;
+    margin: 10px 0;
     border-left: 5px solid var(--accent);
 }
 
-.arrow-indicator {
-    background: #333;
-    padding: 4px 8px;
-    border-radius: 6px;
-    display: inline-block;
-    margin-left: 5px;
+.hint-box {
+    background: #2a1b40;
+    border-left: 5px solid #b388ff;
+    padding: 10px;
+    border-radius: 12px;
+    font-size: 0.9rem;
+    margin: 10px 0;
+    color: #e040fb;
+    font-weight: bold;
 }
 
 .player-list {
     display: flex;
     flex-direction: column;
-    gap: 10px;
-    margin-bottom: 20px;
+    gap: 8px;
+    margin-bottom: 15px;
 }
 
 .player-card {
     background: var(--card-bg);
-    padding: 14px;
+    padding: 12px;
     border-radius: 16px;
     display: flex;
     justify-content: space-between;
     align-items: center;
     border: 2px solid transparent;
-    transition: all 0.3s ease;
 }
 
 .player-card.current {
     border-color: var(--accent);
-    box-shadow: 0 0 15px rgba(0, 200, 83, 0.4);
+    box-shadow: 0 0 12px rgba(0, 200, 83, 0.3);
     background: #232d25;
-    transform: scale(1.02);
-}
-
-.player-card.current .score {
-    color: var(--accent-hover);
 }
 
 .player-info { text-align: left; }
@@ -125,33 +122,46 @@ button:active { transform: scale(0.98); }
 .player-rank { font-size: 0.85rem; color: #aaa; }
 
 .score {
-    font-size: 2rem;
+    font-size: 1.8rem;
     font-weight: 900;
     font-family: monospace;
 }
 
-.throw-section {
-    background: #252525;
-    padding: 15px;
+/* Tastierino custom */
+.custom-keyboard {
+    background: #222;
+    padding: 10px;
     border-radius: 20px;
-    margin-top: 15px;
-    position: sticky;
-    bottom: 10px;
-    box-shadow: 0 -4px 20px rgba(0,0,0,0.5);
+    margin-top: 10px;
 }
 
-.history-box {
-    background: rgba(0,0,0,0.2);
-    padding: 8px;
-    border-radius: 8px;
-    font-size: 0.9rem;
-    color: #bbb;
-    max-height: 60px;
-    overflow-y: auto;
+.display-panel {
+    background: #000;
+    color: var(--accent-hover);
+    font-size: 24px;
+    font-family: monospace;
+    padding: 12px;
+    border-radius: 10px;
     margin-bottom: 10px;
+    font-weight: bold;
 }
 
-/* Box info spiegazione dinamica */
+.keyboard-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+}
+
+.keyboard-grid button {
+    margin: 0;
+    padding: 15px 5px;
+    font-size: 18px;
+    background: #333;
+}
+
+.keyboard-grid .btn-mod { background: #ff6d00; }
+.keyboard-grid .btn-action { background: var(--accent); }
+
 .info-box {
     background: #1a237e;
     border-left: 5px solid #2979ff;
@@ -161,49 +171,33 @@ button:active { transform: scale(0.98); }
     text-align: left;
     margin: 10px 0;
 }
-
-@keyframes celebrate {
-    0% { transform: scale(1); background: gold; }
-    50% { transform: scale(1.1); background: #ffea00; }
-    100% { transform: scale(1); background: gold; }
-}
-.winner-screen {
-    animation: celebrate 1s infinite alternate;
-    color: black !important;
-    padding: 30px !important;
-    border-radius: 20px;
-}
 </style>
 </head>
 <body>
 
 <div class="container">
 
-    <!-- 1. SCHERMATA DI SETUP -->
+    <!-- 1. SETUP -->
     <div id="setup">
         <h1>🎯 Freccette NFC</h1>
-        <p style="color: #aaa; margin-top:0;">Ottimizzato per Smartphone</p>
-
-        <label>Punteggio iniziale</label>
-        <select id="startScorePreset" onchange="toggleCustomScore()">
-            <option value="301" selected>301</option>
-            <option value="501">501</option>
-            <option value="701">701</option>
-            <option value="custom">Personalizzato...</option>
-        </select>
         
-        <!-- Input nascosto per il punteggio personalizzato -->
-        <input id="customStartScore" type="number" inputmode="numeric" pattern="[0-9]*" placeholder="Inserisci punteggio" style="display: none; margin-top: 5px;">
-
         <label>Modalità di Gioco</label>
-        <select id="gameMode" onchange="toggleModeExplanation()">
+        <select id="gameMode" onchange="onModeChange()">
             <option value="normal">Classica</option>
             <option value="tournament">Torneo</option>
+            <option value="challenge">Sfida</option>
         </select>
 
-        <!-- Box per la spiegazione della modalità torneo -->
-        <div id="modeExplanation" class="info-box" style="display: none;">
-            <strong>ℹ️ Regole Torneo:</strong> In questa modalità ad eliminazione progressiva, quando un giocatore raggiunge esattamente lo zero si assicura il podio e viene rimosso dal tabellone di tiro. Gli altri continuano a sfidarsi finché non rimane un solo perdente.
+        <div id="modeExplanation" class="info-box" style="display: none;"></div>
+
+        <div id="scoreSetupArea">
+            <label>Punteggio iniziale</label>
+            <select id="startScorePreset" onchange="toggleCustomScore()">
+                <option value="301" selected>301</option>
+                <option value="501">501</option>
+                <option value="custom">Personalizzato...</option>
+            </select>
+            <input id="customStartScore" type="number" placeholder="Inserisci punteggio" style="display: none; margin-top: 5px;">
         </div>
 
         <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 15px;">
@@ -217,39 +211,40 @@ button:active { transform: scale(0.98); }
         <button onclick="startGame()" style="margin-top:20px; background: var(--accent);">Inizia Partita</button>
     </div>
 
-    <!-- 2. SCHERMATA DI GIOCO -->
+    <!-- 2. GAMEPLAY -->
     <div id="game" style="display:none;">
         <div style="display:flex; justify-content: space-between; align-items: center;">
-            <h1 style="font-size: 1.5rem; margin:0;">🎯 In Corso</h1>
+            <h1 id="gameTitle" style="font-size: 1.5rem; margin:0;">🎯 In Corso</h1>
             <button onclick="exitGame()" class="btn-secondary" style="width:auto; margin:0; padding:8px 15px; font-size:14px;">Esci</button>
         </div>
 
-        <div class="statusBar" id="statusBar">
-            Turno di: <span id="currentTurnName" style="color:var(--accent-hover);"></span>
-            <div style="margin-top: 5px; font-size: 0.9rem; color: #ccc;">
-                Stato: <span id="arrowProgress" class="arrow-indicator">Freccia 1/3</span>
-            </div>
+        <div class="statusBar">
+            Turno: <span id="currentTurnName" style="color:var(--accent-hover);"></span>
+            <span id="arrowProgress" style="float:right; background:#333; padding:2px 8px; border-radius:6px;">1/3</span>
         </div>
+
+        <!-- Box Suggerimenti Dinamici (SBAM / Chiusura) -->
+        <div id="hintBox" class="hint-box"></div>
 
         <h2>Classifica Live</h2>
         <div id="players" class="player-list"></div>
 
-        <div class="throw-section">
-            <div class="history-box" id="historyBox">Cronologia tiri: Nessuno</div>
-            
-            <input id="throwInput" type="number" inputmode="numeric" min="0" max="180" pattern="[0-9]*" placeholder="Punti ottenuti" autocomplete="off">
-            
-            <div style="display: flex; gap: 10px;">
-                <button onclick="undoLastThrow()" class="btn-secondary" style="flex: 1; padding: 14px;">↩ Annulla</button>
-                <button onclick="addThrow()" style="flex: 2; padding: 14px;">Invia Tiro 🎯</button>
+        <!-- TASTIERINO NUMERICO CUSTOM -->
+        <div class="custom-keyboard">
+            <div id="kybDisplay" class="display-panel">0</div>
+            <div class="keyboard-grid">
+                <button onclick="pressNum(7)">7</button><button onclick="pressNum(8)">8</button><button onclick="pressNum(9)">9</button><button onclick="pressMod(1)" class="btn-mod" id="mod1">1x</button>
+                <button onclick="pressNum(4)">4</button><button onclick="pressNum(5)">5</button><button onclick="pressNum(6)">6</button><button onclick="pressMod(2)" class="btn-mod" id="mod2">2x</button>
+                <button onclick="pressNum(1)">1</button><button onclick="pressNum(2)">2</button><button onclick="pressNum(3)">3</button><button onclick="pressMod(3)" class="btn-mod" id="mod3">3x</button>
+                <button onclick="pressClear()" class="btn-danger">C</button><button onclick="pressNum(0)">0</button><button onclick="pressUndo()" class="btn-secondary">↩</button><button onclick="pressEnter()" class="btn-action">OK</button>
             </div>
         </div>
     </div>
 
-    <!-- 3. SCHERMATA STATISTICHE FINALI -->
+    <!-- 3. STATISTICHE E PODIO -->
     <div id="statsScreen" style="display:none;">
-        <div id="winnerBanner" class="winner-screen"></div>
-        <h2>Classifica Finale e Statistiche</h2>
+        <h1 style="color:gold;">🏆 FINE PARTITA 🏆</h1>
+        <h2>Classifica Finale</h2>
         <div id="statsList" class="player-list"></div>
         <button onclick="resetToSetup()" style="background: var(--accent); margin-top:20px;">Nuova Partita</button>
     </div>
@@ -262,47 +257,59 @@ let currentPlayer = 0;
 let throws = 0;
 let startPoints = 301;
 let gameMode = 'normal';
-let wakeLock = null;
 let gameHistory = [];
-let podium = []; // Salva l'ordine di arrivo per la modalità torneo
+let podium = [];
+let currentModifier = 1;
+let currentKybValue = "";
+
+// Lista delle sfide inventate per la modalità "Sfida"
+const challenges = [
+    { title: "🎯 Cecchino Oscuro", desc: "Avvicinati il più possibile a quota 99 punti senza sballare!", target: 99, check: 'closest' },
+    { title: "⚔️ Duello Veloce", desc: "Fai più punti possibili lanciando solo 2 freccette a turno!", target: 0, check: 'maxPoints', maxThrows: 2 },
+    { title: "🎰 Triple Overload", desc: "Valgono solo i tiri inseriti con il moltiplicatore 3x!", target: 0, check: 'onlyTriples' },
+    { title: "🛑 Chiusura Lampo", desc: "Tutti partono da 120 punti. Chi azzera prima vince!", target: 120, check: 'classic0' }
+];
+let activeChallenge = null;
+
+function onModeChange() {
+    const mode = document.getElementById("gameMode").value;
+    const expBox = document.getElementById("modeExplanation");
+    const scoreArea = document.getElementById("scoreSetupArea");
+    
+    expBox.style.display = "block";
+    scoreArea.style.display = "block";
+
+    if (mode === "normal") {
+        expBox.style.display = "none";
+    } else if (mode === "tournament") {
+        expBox.innerHTML = "<strong>ℹ️ Torneo:</strong> Modalità a eliminazione. Chi arriva a 0 esce dal tabellone e si posiziona sul podio. Gli altri continuano fino all'ultimo rimasto.";
+    } else if (mode === "challenge") {
+        scoreArea.style.display = "none";
+        // Ne sceglie una a caso ogni volta che si seleziona
+        activeChallenge = challenges[Math.floor(Math.random() * challenges.length)];
+        expBox.innerHTML = `<strong>🎲 Sfida Estratta: ${activeChallenge.title}</strong><br>${activeChallenge.desc}`;
+    }
+}
 
 function toggleCustomScore() {
     const preset = document.getElementById("startScorePreset").value;
     const customInput = document.getElementById("customStartScore");
-    if (preset === "custom") {
-        customInput.style.display = "block";
-        customInput.focus();
-    } else {
-        customInput.style.display = "none";
-    }
-}
-
-function toggleModeExplanation() {
-    const mode = document.getElementById("gameMode").value;
-    const expBox = document.getElementById("modeExplanation");
-    if (mode === "tournament") {
-        expBox.style.display = "block";
-    } else {
-        expBox.style.display = "none";
-    }
+    customInput.style.display = (preset === "custom") ? "block" : "none";
 }
 
 function generatePlayerFields(count) {
     const container = document.getElementById("playersNamesContainer");
     container.innerHTML = "";
     let savedNames = JSON.parse(localStorage.getItem('darts_saved_names')) || [];
-    
     for (let i = 0; i < count; i++) {
         const div = document.createElement("div");
         div.className = "player-input-row";
-        
         const input = document.createElement("input");
         input.type = "text";
         input.id = `pName_${i}`;
         input.placeholder = `Giocatore ${i + 1}`;
         input.value = savedNames[i] || `Giocatore ${i + 1}`;
-        input.maxLength = 15;
-        
+        input.maxLength = 12;
         div.appendChild(input);
         container.appendChild(div);
     }
@@ -311,338 +318,357 @@ function generatePlayerFields(count) {
 function adjustPlayers(amount) {
     let currentCount = document.querySelectorAll("#playersNamesContainer .player-input-row").length || 2;
     let newCount = currentCount + amount;
-    if (newCount >= 2 && newCount <= 20) {
-        generatePlayerFields(newCount);
-    }
-}
-
-async function requestWakeLock() {
-    try {
-        if ('wakeLock' in navigator) {
-            wakeLock = await navigator.wakeLock.request('screen');
-        }
-    } catch (err) {
-        console.log("Wake Lock non attivo:", err.message);
-    }
-}
-
-function releaseWakeLock() {
-    if (wakeLock !== null) {
-        wakeLock.release();
-        wakeLock = null;
-    }
+    if (newCount >= 2 && newCount <= 20) generatePlayerFields(newCount);
 }
 
 function startGame() {
     const fields = document.querySelectorAll("#playersNamesContainer input");
-    const preset = document.getElementById("startScorePreset").value;
-    
-    if (preset === "custom") {
-        startPoints = parseInt(document.getElementById("customStartScore").value);
-        if (isNaN(startPoints) || startPoints <= 0) {
-            alert("Inserisci un punteggio iniziale personalizzato valido");
-            return;
-        }
-    } else {
-        startPoints = parseInt(preset);
-    }
-
     gameMode = document.getElementById("gameMode").value;
     
-    players = [];
-    gameHistory = [];
-    podium = [];
-    currentPlayer = 0;
-    throws = 0;
+    if (gameMode === 'challenge') {
+        startPoints = activeChallenge.target > 0 ? activeChallenge.target : 0;
+    } else {
+        const preset = document.getElementById("startScorePreset").value;
+        startPoints = preset === "custom" ? parseInt(document.getElementById("customStartScore").value) : parseInt(preset);
+        if (isNaN(startPoints) || startPoints <= 0) { alert("Punteggio non valido"); return; }
+    }
 
+    players = []; gameHistory = []; podium = []; currentPlayer = 0; throws = 0;
     let namesToSave = [];
+
     fields.forEach((field, index) => {
-        let name = field.value.trim();
-        if(!name) name = `Giocatore ${index + 1}`;
+        let name = field.value.trim() || `Giocatore ${index + 1}`;
         namesToSave.push(name);
-        
         players.push({
-            id: index,
-            name: name,
-            score: startPoints,
-            initialScore: startPoints,
-            totalThrows: 0,
-            history: [],
-            isEliminated: false
+            id: index, name: name,
+            score: (gameMode === 'challenge' && activeChallenge.check === 'maxPoints') ? 0 : startPoints,
+            initialScore: startPoints, totalThrows: 0, history: [], isEliminated: false
         });
     });
 
     localStorage.setItem('darts_saved_names', JSON.stringify(namesToSave));
-
     document.getElementById("setup").style.display = "none";
-    document.getElementById("statsScreen").style.display = "none";
     document.getElementById("game").style.display = "block";
+    
+    if(gameMode === 'challenge') {
+        document.getElementById("gameTitle").innerText = "🎲 " + activeChallenge.title;
+    } else {
+        document.getElementById("gameTitle").innerText = "🎯 In Corso";
+    }
 
-    requestWakeLock();
-    saveGameState();
     updateUI();
+    resetKeyboard();
+}
+
+// Genera la scomposizione dei punti in dardi per il tabellone freccette
+function getDartCombination(points) {
+    if (points <= 0 || points > 180) return "N/D";
+    if (points <= 20) return `1x${points}`;
+    if (points % 3 === 0 && points <= 60) return `3x${points / 3}`;
+    if (points % 2 === 0 && points <= 40) return `2x${points / 2}`;
+    
+    // Scomposizione base a due/tre freccette per accorciare
+    for (let i = 60; i > 0; i -= 3) {
+        let diff = points - i;
+        if (diff <= 60 && diff % 3 === 0) return `3x${i/3} + 3x${diff/3}`;
+        if (diff <= 40 && diff % 2 === 0) return `3x${i/3} + 2x${diff/2}`;
+        if (diff <= 20) return `3x${i/3} + 1x${diff}`;
+    }
+    return `${points} Punti`;
+}
+
+// Aggiorna suggerimenti matematici per agganciare o chiudere
+function updateHints() {
+    const hintBox = document.getElementById("hintBox");
+    if (gameMode === 'challenge' && activeChallenge.check !== 'classic0') {
+        hintBox.style.display = "none";
+        return;
+    }
+    
+    let player = players[currentPlayer];
+    
+    // Caso 1: Suggerimento di chiusura diretta
+    if (player.score <= 60) {
+        hintBox.style.display = "block";
+        hintBox.innerHTML = `🎯 Per Vincere ora: fare esattamente ${player.score} (${getDartCombination(player.score)})`;
+        return;
+    }
+
+    // Caso 2: Calcolo distanza dall'avversario per attivare la regola dello SBAM
+    let targets = players.filter(p => p.id !== player.id && !p.isEliminated && p.score < player.score);
+    if (targets.length > 0) {
+        // Trova il più vicino (ovvero quello con il punteggio più alto tra quelli sotto di lui)
+        targets.sort((a,b) => b.score - a.score);
+        let targetPlayer = targets[0];
+        let needed = player.score - targetPlayer.score;
+        
+        if (needed <= 180) {
+            hintBox.style.display = "block";
+            hintBox.innerHTML = `⚔️ Per resettare ${targetPlayer.name}: servono ${needed} punti (${getDartCombination(needed)})`;
+        } else {
+            hintBox.style.display = "none";
+        }
+    } else {
+        hintBox.style.display = "none";
+    }
 }
 
 function updateUI() {
     if (players.length === 0) return;
-
     let activePlayer = players[currentPlayer];
+    
     document.getElementById("currentTurnName").innerText = activePlayer.name;
-    document.getElementById("arrowProgress").innerText = `Freccia ${throws + 1}/3`;
+    
+    let maxArrow = (gameMode === 'challenge' && activeChallenge.maxThrows) ? activeChallenge.maxThrows : 3;
+    document.getElementById("arrowProgress").innerText = `Freccia ${throws + 1}/${maxArrow}`;
 
+    // ALGORITMO DI CLASSIFICA LIVE
     let sortedPlayers = [...players].sort((a, b) => {
         if (a.isEliminated && !b.isEliminated) return 1;
         if (!a.isEliminated && b.isEliminated) return -1;
-        return a.score - b.score;
+        
+        if (gameMode === 'challenge' && activeChallenge.check === 'maxPoints') {
+            return b.score - a.score; // Vince chi fa più punti
+        }
+        return a.score - b.score; // Classica e torneo: vince chi va a zero (punteggio minore)
     });
 
     let html = "";
     sortedPlayers.forEach((p, idx) => {
         let isCurrent = p.id === activePlayer.id;
-        let statusText = p.isEliminated ? "COMPLETATO" : `Pos. #${idx + 1}`;
-        
+        let lbl = p.isEliminated ? "FINE" : `Pos. #${idx + 1}`;
         html += `
         <div class="player-card ${isCurrent ? 'current' : ''}" style="${p.isEliminated ? 'opacity:0.5;' : ''}">
             <div class="player-info">
                 <div class="player-name">${p.name} ${isCurrent ? '🎯' : ''}</div>
-                <div class="player-rank">${statusText}</div>
+                <div class="player-rank">${lbl}</div>
             </div>
             <div class="score">${p.isEliminated ? '✅' : p.score}</div>
         </div>
         `;
     });
-
     document.getElementById("players").innerHTML = html;
+    updateHints();
+}
 
-    let historyBox = document.getElementById("historyBox");
-    if(activePlayer.history.length > 0) {
-        historyBox.innerText = `Ultimi tiri di ${activePlayer.name}: [${activePlayer.history.slice(-6).join(", ")}]`;
-    } else {
-        historyBox.innerText = `Cronologia tiri di ${activePlayer.name}: Nessuno`;
+/* GESTIONE TASTIERINO NUMERICO CUSTOM */
+function pressNum(n) {
+    if (currentKybValue.length < 3) {
+        currentKybValue += n;
+        updateKybDisplay();
     }
 }
 
-function addThrow() {
-    const input = document.getElementById("throwInput");
-    let value = parseInt(input.value);
+function pressMod(m) {
+    currentModifier = m;
+    document.getElementById("mod1").style.background = m === 1 ? "#00c853" : "#333";
+    document.getElementById("mod2").style.background = m === 2 ? "#ff6d00" : "#333";
+    document.getElementById("mod3").style.background = m === 3 ? "#ff6d00" : "#333";
+    updateKybDisplay();
+}
 
-    if (isNaN(value) || value < 0 || value > 180) {
-        alert("Inserisci un punteggio valido tra 0 e 180");
-        input.value = "";
+function pressClear() {
+    currentKybValue = "";
+    updateKybDisplay();
+}
+
+function updateKybDisplay() {
+    let num = parseInt(currentKybValue) || 0;
+    let total = num * currentModifier;
+    document.getElementById("kybDisplay").innerText = `${num} x ${currentModifier} = ${total}`;
+}
+
+function resetKeyboard() {
+    currentKybValue = "";
+    pressMod(1);
+}
+
+function pressEnter() {
+    let num = parseInt(currentKybValue) || 0;
+    let finalValue = num * currentModifier;
+
+    if (finalValue > 180) {
+        alert("Punteggio massimo per lancio singolo è 180!");
+        pressClear();
+        return;
+    }
+    
+    if (gameMode === 'challenge' && activeChallenge.check === 'onlyTriples' && currentModifier !== 3 && finalValue > 0) {
+        alert("In questa sfida valgono solo i cannocchiali Triple (3x)!");
+        pressClear();
         return;
     }
 
+    executeThrow(finalValue);
+    resetKeyboard();
+}
+
+/* LOGICA DI GIOCO */
+function executeThrow(value) {
     let player = players[currentPlayer];
     let oldScore = player.score;
-    let newScore = player.score - value;
-
+    
     gameHistory.push({
-        playerId: player.id,
-        scoreBefore: oldScore,
-        throwValue: value,
-        throwsState: throws,
-        currentPlayerIndex: currentPlayer,
-        wasResetBySbam: null,
-        modeSpecificFinish: false
+        playerId: player.id, scoreBefore: oldScore, throwValue: value,
+        throwsState: throws, currentPlayerIndex: currentPlayer, wasResetBySbam: null, modeSpecificFinish: false
     });
 
-    if (newScore < 0) {
-        let excess = Math.abs(newScore);
-        player.score = excess;
+    player.totalThrows++;
+    player.history.push(value);
+
+    // Gestione calcolo punteggio in base alla modalità
+    if (gameMode === 'challenge' && activeChallenge.check === 'maxPoints') {
+        player.score += value;
+    } else if (gameMode === 'challenge' && activeChallenge.check === 'closest') {
+        player.score -= value;
     } else {
-        player.score = newScore;
+        // Modalità Classica e Torneo standard (Logica Rimbalzo su 0)
+        let newScore = player.score - value;
+        player.score = newScore < 0 ? Math.abs(newScore) : newScore;
     }
 
-    player.history.push(value);
-    player.totalThrows++;
-
-    // Controllo Chiusura a Zero (0)
-    if (player.score === 0) {
+    // Controllo chiusura standard a 0
+    if ((gameMode === 'normal' || gameMode === 'tournament' || activeChallenge.check === 'classic0') && player.score === 0) {
         player.isEliminated = true;
         podium.push(player);
         gameHistory[gameHistory.length - 1].modeSpecificFinish = true;
         
-        alert(`🏆 ${player.name} ha chiuso la partita!`);
-
-        // Verifica fine delle condizioni di gioco in base alla modalità
-        let activePlayersCount = players.filter(p => !p.isEliminated).length;
-        if (gameMode === 'normal' || activePlayersCount <= 1) {
-            // Aggiunge anche l'ultimo rimasto se siamo in modalità torneo
-            if(gameMode === 'tournament' && activePlayersCount === 1) {
-                let lastPlayer = players.find(p => !p.isEliminated);
-                lastPlayer.isEliminated = true;
-                podium.push(lastPlayer);
-            }
+        alert(`🏆 ${player.name} ha chiuso la sessione!`);
+        
+        let activeCount = players.filter(p => !p.isEliminated).length;
+        if (gameMode === 'normal' || activeCount <= 1) {
+            if(activeCount === 1) podium.push(players.find(p => !p.isEliminated));
             endGame();
             return;
         } else {
-            // Se modalità torneo e ci sono ancora giocatori, si passa al prossimo saltando questo
-            input.value = "";
             moveToNextPlayer();
-            saveGameState();
             updateUI();
             return;
         }
     }
 
-    // REGOLA SPECIALE PAREGGIO
-    players.forEach((p) => {
-        if (p.id !== player.id && !p.isEliminated && p.score === player.score && player.score !== startPoints) {
-            let lastHistoryEntry = gameHistory[gameHistory.length - 1];
-            lastHistoryEntry.wasResetBySbam = { targetId: p.id, oldScore: p.score };
-            
-            p.score = startPoints;
-            alert(`💥 SBAM! ${player.name} ha raggiunto ${p.name}. ${p.name} torna a ${startPoints} punti!`);
-        }
-    });
-
-    throws++;
-    if (throws === 3) {
-        moveToNextPlayer();
+    // Regola dello SBAM (Pareggio) solo nelle modalità a decremento classico
+    if (gameMode !== 'challenge' || activeChallenge.check === 'classic0') {
+        players.forEach((p) => {
+            if (p.id !== player.id && !p.isEliminated && p.score === player.score && player.score !== startPoints) {
+                gameHistory[gameHistory.length - 1].wasResetBySbam = { targetId: p.id, oldScore: p.score };
+                p.score = startPoints;
+                alert(`💥 SBAM! ${player.name} ha accoppiato ${p.name}. ${p.name} ritorna a ${startPoints}!`);
+            }
+        });
     }
 
-    input.value = "";
-    saveGameState();
+    // Incremento freccette lanciate nel turno corrente
+    throws++;
+    let maxAllowedThrows = (gameMode === 'challenge' && activeChallenge.maxThrows) ? activeChallenge.maxThrows : 3;
+    
+    if (throws >= maxAllowedThrows) {
+        moveToNextPlayer();
+    }
+    
     updateUI();
-    input.focus();
 }
 
 function moveToNextPlayer() {
     throws = 0;
-    let attempts = 0;
+    let initialTurn = currentPlayer;
+    
+    // Gestione fine dei turni globali per le sfide a round fissi (es. Cecchino o Max Punti dopo 3 turni a testa)
+    let allFinished = false;
+    
     do {
         currentPlayer++;
         if (currentPlayer >= players.length) {
             currentPlayer = 0;
+            // Se tutti i giocatori hanno effettuato lo stesso numero di tiri nelle sfide a round
+            if (gameMode === 'challenge' && activeChallenge.check !== 'classic0') {
+                let firstPlayerThrows = players[0].totalThrows;
+                let maxAllowedThrows = activeChallenge.maxThrows || 3;
+                if (firstPlayerThrows >= maxAllowedThrows * 3) { // 3 round completi
+                    allFinished = true;
+                    break;
+                }
+            }
         }
-        attempts++;
-    } while (players[currentPlayer].isEliminated && attempts <= players.length);
+    } while (players[currentPlayer].isEliminated && currentPlayer !== initialTurn);
+
+    if (allFinished) {
+        endGame();
+    }
 }
 
-function undoLastThrow() {
-    if (gameHistory.length === 0) {
-        alert("Nessun tiro da annullare.");
-        return;
-    }
+function pressUndo() {
+    if (gameHistory.length === 0) return;
+    let last = gameHistory.pop();
+    let player = players.find(p => p.id === last.playerId);
 
-    let lastAction = gameHistory.pop();
-    let player = players.find(p => p.id === lastAction.playerId);
-
-    // Ripristina lo stato di eliminazione/podio se aveva fatto 0
-    if (lastAction.modeSpecificFinish) {
+    if (last.modeSpecificFinish) {
         player.isEliminated = false;
         podium.pop();
     }
-
-    player.score = lastAction.scoreBefore;
+    player.score = last.scoreBefore;
     player.history.pop();
     player.totalThrows--;
 
-    if (lastAction.wasResetBySbam) {
-        let targetPlayer = players.find(p => p.id === lastAction.wasResetBySbam.targetId);
-        targetPlayer.score = lastAction.wasResetBySbam.oldScore;
+    if (last.wasResetBySbam) {
+        let target = players.find(p => p.id === last.wasResetBySbam.targetId);
+        target.score = last.wasResetBySbam.oldScore;
     }
 
-    currentPlayer = lastAction.currentPlayerIndex;
-    throws = lastAction.throwsState;
-
-    saveGameState();
+    currentPlayer = last.currentPlayerIndex;
+    throws = last.throwsState;
     updateUI();
-    document.getElementById("throwInput").focus();
+    resetKeyboard();
 }
 
 function endGame() {
-    releaseWakeLock();
-    localStorage.removeItem('darts_current_game');
-
     document.getElementById("game").style.display = "none";
     document.getElementById("statsScreen").style.display = "block";
 
-    let absoluteWinner = gameMode === 'tournament' ? podium[0] : players.find(p => p.score === 0);
-    
-    document.getElementById("winnerBanner").innerHTML = `
-        <h1 style="color:black; margin:0;">🏆 ${absoluteWinner.name} VINCE! 🏆</h1>
-        <p style="margin:5px 0 0 0; font-weight:bold;">Partita completata con successo!</p>
-    `;
+    // CREAZIONE DELLA CLASSIFICA FINALE CRITERIATA
+    let finalOrder = [];
+    if (gameMode === 'tournament') {
+        finalOrder = [...podium];
+    } else if (gameMode === 'challenge' && activeChallenge.check === 'maxPoints') {
+        finalOrder = [...players].sort((a,b) => b.score - a.score);
+    } else if (gameMode === 'challenge' && activeChallenge.check === 'closest') {
+        // Vince chi è più vicino a 0 (valore assoluto) senza essere andato sotto se sballato
+        finalOrder = [...players].sort((a,b) => Math.abs(a.score) - Math.abs(b.score));
+    } else {
+        finalOrder = [...players].sort((a,b) => a.score - b.score);
+    }
 
-    // Visualizzazione classifica finale basata sull'ordine di arrivo o sui punteggi rimasti
-    let finalOrder = gameMode === 'tournament' ? podium : [...players].sort((a,b) => a.score - b.score);
     let html = "";
-    
     finalOrder.forEach((p, idx) => {
-        let avg = p.totalThrows > 0 ? ((p.initialScore - p.score) / p.totalThrows).toFixed(1) : 0;
-        
+        let descResult = (gameMode === 'challenge' && activeChallenge.check === 'maxPoints') ? `${p.score} Punti fatti` : `${p.score} Residui`;
         html += `
         <div class="player-card">
             <div class="player-info">
                 <div class="player-name">#${idx+1} - ${p.name}</div>
-                <div class="player-rank">Tiri Totali: ${p.totalThrows} | Media/Freccia: ${avg}</div>
+                <div class="player-rank">Lanci: ${p.totalThrows}</div>
             </div>
-            <div class="score" style="font-size:1.4rem;">${p.score} rimasti</div>
+            <div class="score" style="font-size:1.3rem;">${descResult}</div>
         </div>
         `;
     });
     document.getElementById("statsList").innerHTML = html;
 }
 
-function saveGameState() {
-    let state = {
-        players: players,
-        currentPlayer: currentPlayer,
-        throws: throws,
-        startPoints: startPoints,
-        gameMode: gameMode,
-        gameHistory: gameHistory,
-        podium: podium
-    };
-    localStorage.setItem('darts_current_game', JSON.stringify(state));
-}
-
-function loadGameState() {
-    let saved = localStorage.getItem('darts_current_game');
-    if (saved) {
-        let state = JSON.parse(saved);
-        if (confirm("È presente una partita interrotta. Vuoi riprenderla?")) {
-            players = state.players;
-            currentPlayer = state.currentPlayer;
-            throws = state.throws;
-            startPoints = state.startPoints;
-            gameMode = state.gameMode || 'normal';
-            gameHistory = state.gameHistory || [];
-            podium = state.podium || [];
-
-            document.getElementById("setup").style.display = "none";
-            document.getElementById("game").style.display = "block";
-            requestWakeLock();
-            updateUI();
-            return true;
-        }
-    }
-    return false;
-}
-
 function exitGame() {
-    if(confirm("Vuoi davvero abbandonare la partita corrente?")) {
-        localStorage.removeItem('darts_current_game');
-        resetToSetup();
-    }
+    if(confirm("Vuoi uscire?")) resetToSetup();
 }
 
 function resetToSetup() {
-    releaseWakeLock();
     document.getElementById("setup").style.display = "block";
     document.getElementById("game").style.display = "none";
     document.getElementById("statsScreen").style.display = "none";
-    document.getElementById("customStartScore").style.display = "none";
-    document.getElementById("startScorePreset").value = "301";
     document.getElementById("gameMode").value = "normal";
-    toggleModeExplanation();
+    onModeChange();
     generatePlayerFields(2);
 }
 
 window.onload = function() {
     generatePlayerFields(2);
-    loadGameState();
 };
 </script>
 
