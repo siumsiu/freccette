@@ -27,7 +27,7 @@ body {
 
 .container {
     padding: 15px;
-    max-width: 480px; /* Perfetto per smartphone */
+    max-width: 480px;
     margin: auto;
     box-sizing: border-box;
 }
@@ -35,7 +35,6 @@ body {
 h1 { color: var(--accent); margin-bottom: 5px; font-size: 2rem; }
 h2 { margin: 15px 0 10px 0; font-size: 1.4rem; }
 
-/* Form e Input touch-friendly */
 input, select, button {
     width: 100%;
     padding: 16px;
@@ -67,16 +66,13 @@ button {
 
 button:active { transform: scale(0.98); }
 .btn-secondary { background: #333; }
-.btn-danger { background: var(--danger); }
 
-/* Lista Giocatori Configurazione */
 .player-input-row {
     display: flex;
     gap: 8px;
     align-items: center;
 }
 
-/* Griglia e Barre di Stato */
 .statusBar {
     background: var(--card-bg);
     padding: 12px;
@@ -95,7 +91,6 @@ button:active { transform: scale(0.98); }
     margin-left: 5px;
 }
 
-/* Lista Giocatori In-Game */
 .player-list {
     display: flex;
     flex-direction: column;
@@ -114,7 +109,6 @@ button:active { transform: scale(0.98); }
     transition: all 0.3s ease;
 }
 
-/* Evidenziazione netta del giocatore di turno */
 .player-card.current {
     border-color: var(--accent);
     box-shadow: 0 0 15px rgba(0, 200, 83, 0.4);
@@ -136,14 +130,13 @@ button:active { transform: scale(0.98); }
     font-family: monospace;
 }
 
-/* Sezione Tiro Rapido */
 .throw-section {
     background: #252525;
     padding: 15px;
     border-radius: 20px;
     margin-top: 15px;
     position: sticky;
-    bottom: 10px; /* Rimane comodo vicino al pollice */
+    bottom: 10px;
     box-shadow: 0 -4px 20px rgba(0,0,0,0.5);
 }
 
@@ -158,7 +151,17 @@ button:active { transform: scale(0.98); }
     margin-bottom: 10px;
 }
 
-/* Animazione Vittoria */
+/* Box info spiegazione dinamica */
+.info-box {
+    background: #1a237e;
+    border-left: 5px solid #2979ff;
+    padding: 12px;
+    border-radius: 12px;
+    font-size: 0.95rem;
+    text-align: left;
+    margin: 10px 0;
+}
+
 @keyframes celebrate {
     0% { transform: scale(1); background: gold; }
     50% { transform: scale(1.1); background: #ffea00; }
@@ -176,22 +179,32 @@ button:active { transform: scale(0.98); }
 
 <div class="container">
 
+    <!-- 1. SCHERMATA DI SETUP -->
     <div id="setup">
         <h1>🎯 Freccette NFC</h1>
         <p style="color: #aaa; margin-top:0;">Ottimizzato per Smartphone</p>
 
         <label>Punteggio iniziale</label>
-        <select id="startScore">
-            <option value="301" selected>301 (Consigliato)</option>
+        <select id="startScorePreset" onchange="toggleCustomScore()">
+            <option value="301" selected>301</option>
             <option value="501">501</option>
             <option value="701">701</option>
+            <option value="custom">Personalizzato...</option>
         </select>
+        
+        <!-- Input nascosto per il punteggio personalizzato -->
+        <input id="customStartScore" type="number" inputmode="numeric" pattern="[0-9]*" placeholder="Inserisci punteggio" style="display: none; margin-top: 5px;">
 
         <label>Modalità di Gioco</label>
-        <select id="gameMode">
+        <select id="gameMode" onchange="toggleModeExplanation()">
             <option value="normal">Classica</option>
-            <option value="tournament">Torneo (Eliminazione diretta)</option>
+            <option value="tournament">Torneo</option>
         </select>
+
+        <!-- Box per la spiegazione della modalità torneo -->
+        <div id="modeExplanation" class="info-box" style="display: none;">
+            <strong>ℹ️ Regole Torneo:</strong> In questa modalità ad eliminazione progressiva, quando un giocatore raggiunge esattamente lo zero si assicura il podio e viene rimosso dal tabellone di tiro. Gli altri continuano a sfidarsi finché non rimane un solo perdente.
+        </div>
 
         <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 15px;">
             <label style="margin:0;">Giocatori (2-20)</label>
@@ -204,6 +217,7 @@ button:active { transform: scale(0.98); }
         <button onclick="startGame()" style="margin-top:20px; background: var(--accent);">Inizia Partita</button>
     </div>
 
+    <!-- 2. SCHERMATA DI GIOCO -->
     <div id="game" style="display:none;">
         <div style="display:flex; justify-content: space-between; align-items: center;">
             <h1 style="font-size: 1.5rem; margin:0;">🎯 In Corso</h1>
@@ -223,7 +237,7 @@ button:active { transform: scale(0.98); }
         <div class="throw-section">
             <div class="history-box" id="historyBox">Cronologia tiri: Nessuno</div>
             
-            <input id="throwInput" type="number" inputmode="numeric" min="0" max="180" pattern="[0-9]*" placeholder="Punti ottenuti (es. 26)" autocomplete="off">
+            <input id="throwInput" type="number" inputmode="numeric" min="0" max="180" pattern="[0-9]*" placeholder="Punti ottenuti" autocomplete="off">
             
             <div style="display: flex; gap: 10px;">
                 <button onclick="undoLastThrow()" class="btn-secondary" style="flex: 1; padding: 14px;">↩ Annulla</button>
@@ -232,6 +246,7 @@ button:active { transform: scale(0.98); }
         </div>
     </div>
 
+    <!-- 3. SCHERMATA STATISTICHE FINALI -->
     <div id="statsScreen" style="display:none;">
         <div id="winnerBanner" class="winner-screen"></div>
         <h2>Classifica Finale e Statistiche</h2>
@@ -248,9 +263,30 @@ let throws = 0;
 let startPoints = 301;
 let gameMode = 'normal';
 let wakeLock = null;
-let gameHistory = []; // Per l'annullamento dei tiri e statistiche
+let gameHistory = [];
+let podium = []; // Salva l'ordine di arrivo per la modalità torneo
 
-// Gestione dinamica dei campi nome giocatore (Max 20)
+function toggleCustomScore() {
+    const preset = document.getElementById("startScorePreset").value;
+    const customInput = document.getElementById("customStartScore");
+    if (preset === "custom") {
+        customInput.style.display = "block";
+        customInput.focus();
+    } else {
+        customInput.style.display = "none";
+    }
+}
+
+function toggleModeExplanation() {
+    const mode = document.getElementById("gameMode").value;
+    const expBox = document.getElementById("modeExplanation");
+    if (mode === "tournament") {
+        expBox.style.display = "block";
+    } else {
+        expBox.style.display = "none";
+    }
+}
+
 function generatePlayerFields(count) {
     const container = document.getElementById("playersNamesContainer");
     container.innerHTML = "";
@@ -280,14 +316,13 @@ function adjustPlayers(amount) {
     }
 }
 
-// Richiesta dello schermo sempre acceso (Wake Lock API)
 async function requestWakeLock() {
     try {
         if ('wakeLock' in navigator) {
             wakeLock = await navigator.wakeLock.request('screen');
         }
     } catch (err) {
-        console.log("Wake Lock non supportato o declinato:", err.message);
+        console.log("Wake Lock non attivo:", err.message);
     }
 }
 
@@ -298,14 +333,25 @@ function releaseWakeLock() {
     }
 }
 
-// Inizio Partita
 function startGame() {
     const fields = document.querySelectorAll("#playersNamesContainer input");
-    startPoints = parseInt(document.getElementById("startScore").value);
+    const preset = document.getElementById("startScorePreset").value;
+    
+    if (preset === "custom") {
+        startPoints = parseInt(document.getElementById("customStartScore").value);
+        if (isNaN(startPoints) || startPoints <= 0) {
+            alert("Inserisci un punteggio iniziale personalizzato valido");
+            return;
+        }
+    } else {
+        startPoints = parseInt(preset);
+    }
+
     gameMode = document.getElementById("gameMode").value;
     
     players = [];
     gameHistory = [];
+    podium = [];
     currentPlayer = 0;
     throws = 0;
 
@@ -337,7 +383,6 @@ function startGame() {
     updateUI();
 }
 
-// Aggiornamento Interfaccia Grafica e Classifica Live Ordinata
 function updateUI() {
     if (players.length === 0) return;
 
@@ -345,32 +390,30 @@ function updateUI() {
     document.getElementById("currentTurnName").innerText = activePlayer.name;
     document.getElementById("arrowProgress").innerText = `Freccia ${throws + 1}/3`;
 
-    // Generazione classifica live (cloniamo per ordinare senza rompere i turni indicizzati)
     let sortedPlayers = [...players].sort((a, b) => {
         if (a.isEliminated && !b.isEliminated) return 1;
         if (!a.isEliminated && b.isEliminated) return -1;
-        return a.score - b.score; // Vince chi ha il punteggio più basso (vicino a 0)
+        return a.score - b.score;
     });
 
     let html = "";
     sortedPlayers.forEach((p, idx) => {
         let isCurrent = p.id === activePlayer.id;
-        let statusText = p.isEliminated ? "ELIMINATO" : `Pos. #${idx + 1}`;
+        let statusText = p.isEliminated ? "COMPLETATO" : `Pos. #${idx + 1}`;
         
         html += `
-        <div class="player-card ${isCurrent ? 'current' : ''}" style="${p.isEliminated ? 'opacity:0.4;' : ''}">
+        <div class="player-card ${isCurrent ? 'current' : ''}" style="${p.isEliminated ? 'opacity:0.5;' : ''}">
             <div class="player-info">
                 <div class="player-name">${p.name} ${isCurrent ? '🎯' : ''}</div>
                 <div class="player-rank">${statusText}</div>
             </div>
-            <div class="score">${p.isEliminated ? '❌' : p.score}</div>
+            <div class="score">${p.isEliminated ? '✅' : p.score}</div>
         </div>
         `;
     });
 
     document.getElementById("players").innerHTML = html;
 
-    // Aggiorna box della cronologia tiri del giocatore attuale
     let historyBox = document.getElementById("historyBox");
     if(activePlayer.history.length > 0) {
         historyBox.innerText = `Ultimi tiri di ${activePlayer.name}: [${activePlayer.history.slice(-6).join(", ")}]`;
@@ -379,12 +422,10 @@ function updateUI() {
     }
 }
 
-// Aggiungi un singolo tiro
 function addThrow() {
     const input = document.getElementById("throwInput");
     let value = parseInt(input.value);
 
-    // Validazione input smartphone
     if (isNaN(value) || value < 0 || value > 180) {
         alert("Inserisci un punteggio valido tra 0 e 180");
         input.value = "";
@@ -395,20 +436,19 @@ function addThrow() {
     let oldScore = player.score;
     let newScore = player.score - value;
 
-    // Salvataggio nello storico globale per "Annulla"
     gameHistory.push({
         playerId: player.id,
         scoreBefore: oldScore,
         throwValue: value,
         throwsState: throws,
         currentPlayerIndex: currentPlayer,
-        wasResetBySbam: null // Traccia se questo tiro ha resettato qualcun altro
+        wasResetBySbam: null,
+        modeSpecificFinish: false
     });
 
-    // Regola del Sballo (Bust) standard o rimbalzo inverso personalizzato del codice originale
     if (newScore < 0) {
         let excess = Math.abs(newScore);
-        player.score = excess; // Mantiene la logica personalizzata del codice originale
+        player.score = excess;
     } else {
         player.score = newScore;
     }
@@ -416,13 +456,36 @@ function addThrow() {
     player.history.push(value);
     player.totalThrows++;
 
-    // Controllo Vittoria
+    // Controllo Chiusura a Zero (0)
     if (player.score === 0) {
-        endGame(player);
-        return;
+        player.isEliminated = true;
+        podium.push(player);
+        gameHistory[gameHistory.length - 1].modeSpecificFinish = true;
+        
+        alert(`🏆 ${player.name} ha chiuso la partita!`);
+
+        // Verifica fine delle condizioni di gioco in base alla modalità
+        let activePlayersCount = players.filter(p => !p.isEliminated).length;
+        if (gameMode === 'normal' || activePlayersCount <= 1) {
+            // Aggiunge anche l'ultimo rimasto se siamo in modalità torneo
+            if(gameMode === 'tournament' && activePlayersCount === 1) {
+                let lastPlayer = players.find(p => !p.isEliminated);
+                lastPlayer.isEliminated = true;
+                podium.push(lastPlayer);
+            }
+            endGame();
+            return;
+        } else {
+            // Se modalità torneo e ci sono ancora giocatori, si passa al prossimo saltando questo
+            input.value = "";
+            moveToNextPlayer();
+            saveGameState();
+            updateUI();
+            return;
+        }
     }
 
-    // REGOLA SPECIALE PAREGGIO: Se eguagli il punteggio di un avversario, lo rimandi al punteggio iniziale
+    // REGOLA SPECIALE PAREGGIO
     players.forEach((p) => {
         if (p.id !== player.id && !p.isEliminated && p.score === player.score && player.score !== startPoints) {
             let lastHistoryEntry = gameHistory[gameHistory.length - 1];
@@ -433,7 +496,6 @@ function addThrow() {
         }
     });
 
-    // Avanzamento freccia e turni
     throws++;
     if (throws === 3) {
         moveToNextPlayer();
@@ -442,7 +504,7 @@ function addThrow() {
     input.value = "";
     saveGameState();
     updateUI();
-    input.focus(); // Mantiene la tastiera aperta sul telefono
+    input.focus();
 }
 
 function moveToNextPlayer() {
@@ -457,7 +519,6 @@ function moveToNextPlayer() {
     } while (players[currentPlayer].isEliminated && attempts <= players.length);
 }
 
-// Funzione Annulla Ultimo Tiro (Undo)
 function undoLastThrow() {
     if (gameHistory.length === 0) {
         alert("Nessun tiro da annullare.");
@@ -467,18 +528,21 @@ function undoLastThrow() {
     let lastAction = gameHistory.pop();
     let player = players.find(p => p.id === lastAction.playerId);
 
-    // Ripristina punteggio e storico del tiratore
+    // Ripristina lo stato di eliminazione/podio se aveva fatto 0
+    if (lastAction.modeSpecificFinish) {
+        player.isEliminated = false;
+        podium.pop();
+    }
+
     player.score = lastAction.scoreBefore;
     player.history.pop();
     player.totalThrows--;
 
-    // Ripristina l'eventuale avversario penalizzato dalla regola del pareggio
     if (lastAction.wasResetBySbam) {
         let targetPlayer = players.find(p => p.id === lastAction.wasResetBySbam.targetId);
         targetPlayer.score = lastAction.wasResetBySbam.oldScore;
     }
 
-    // Ripristina lo stato del turno e della freccia
     currentPlayer = lastAction.currentPlayerIndex;
     throws = lastAction.throwsState;
 
@@ -487,26 +551,26 @@ function undoLastThrow() {
     document.getElementById("throwInput").focus();
 }
 
-// Fine partita e Schermata Statistiche
-function endGame(winner) {
+function endGame() {
     releaseWakeLock();
     localStorage.removeItem('darts_current_game');
 
     document.getElementById("game").style.display = "none";
     document.getElementById("statsScreen").style.display = "block";
 
+    let absoluteWinner = gameMode === 'tournament' ? podium[0] : players.find(p => p.score === 0);
+    
     document.getElementById("winnerBanner").innerHTML = `
-        <h1 style="color:black; margin:0;">🏆 ${winner.name} VINCE! 🏆</h1>
+        <h1 style="color:black; margin:0;">🏆 ${absoluteWinner.name} VINCE! 🏆</h1>
         <p style="margin:5px 0 0 0; font-weight:bold;">Partita completata con successo!</p>
     `;
 
-    // Genera Statistiche Finali ordina per punteggio (più basso è meglio)
-    let sortedFinal = [...players].sort((a,b) => a.score - b.score);
+    // Visualizzazione classifica finale basata sull'ordine di arrivo o sui punteggi rimasti
+    let finalOrder = gameMode === 'tournament' ? podium : [...players].sort((a,b) => a.score - b.score);
     let html = "";
     
-    sortedFinal.forEach((p, idx) => {
+    finalOrder.forEach((p, idx) => {
         let avg = p.totalThrows > 0 ? ((p.initialScore - p.score) / p.totalThrows).toFixed(1) : 0;
-        let totalPointsScored = p.initialScore - p.score;
         
         html += `
         <div class="player-card">
@@ -521,7 +585,6 @@ function endGame(winner) {
     document.getElementById("statsList").innerHTML = html;
 }
 
-// Persistenza Dati (Salvataggio Automatico)
 function saveGameState() {
     let state = {
         players: players,
@@ -529,7 +592,8 @@ function saveGameState() {
         throws: throws,
         startPoints: startPoints,
         gameMode: gameMode,
-        gameHistory: gameHistory
+        gameHistory: gameHistory,
+        podium: podium
     };
     localStorage.setItem('darts_current_game', JSON.stringify(state));
 }
@@ -545,6 +609,7 @@ function loadGameState() {
             startPoints = state.startPoints;
             gameMode = state.gameMode || 'normal';
             gameHistory = state.gameHistory || [];
+            podium = state.podium || [];
 
             document.getElementById("setup").style.display = "none";
             document.getElementById("game").style.display = "block";
@@ -568,10 +633,13 @@ function resetToSetup() {
     document.getElementById("setup").style.display = "block";
     document.getElementById("game").style.display = "none";
     document.getElementById("statsScreen").style.display = "none";
+    document.getElementById("customStartScore").style.display = "none";
+    document.getElementById("startScorePreset").value = "301";
+    document.getElementById("gameMode").value = "normal";
+    toggleModeExplanation();
     generatePlayerFields(2);
 }
 
-// Inizializzazione al caricamento
 window.onload = function() {
     generatePlayerFields(2);
     loadGameState();
