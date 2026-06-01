@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Freccette NFC</title>
+
+<style>
+body{
+    margin:0;
+    font-family:Arial,sans-serif;
+    background:#121212;
+    color:white;
+    text-align:center;
+}
+
+.container{
+    padding:20px;
+    max-width:700px;
+    margin:auto;
+}
+
+input,button{
+    padding:12px;
+    margin:8px;
+    border:none;
+    border-radius:10px;
+    font-size:18px;
+}
+
+button{
+    background:#00c853;
+    color:white;
+    cursor:pointer;
+}
+
+button:hover{
+    background:#00e676;
+}
+
+.player{
+    background:#1e1e1e;
+    margin:10px;
+    padding:10px;
+    border-radius:12px;
+}
+
+.current{
+    border:3px solid gold;
+}
+
+.score{
+    font-size:28px;
+    font-weight:bold;
+}
+
+h1{
+    color:#00e676;
+}
+
+.turn{
+    font-size:22px;
+    margin:15px;
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+
+<div id="setup">
+
+<h1>🎯 Freccette NFC</h1>
+
+<p>Numero giocatori</p>
+<input id="numPlayers" type="number" min="2" value="2">
+
+<p>Punteggio iniziale</p>
+<input id="startScore" type="number" value="501">
+
+<br>
+
+<button onclick="startGame()">Inizia Partita</button>
+
+</div>
+
+<div id="game" style="display:none;">
+
+<h1>🎯 Partita</h1>
+
+<div class="turn" id="turnInfo"></div>
+
+<div id="players"></div>
+
+<h2>Tiro corrente</h2>
+
+<input id="throwInput" type="number" min="0" max="180" placeholder="Punti ottenuti">
+
+<br>
+
+<button onclick="addThrow()">Aggiungi Tiro</button>
+
+<h3 id="throwCount"></h3>
+
+</div>
+
+</div>
+
+<script>
+
+let players=[];
+let currentPlayer=0;
+let throws=0;
+let startPoints=501;
+
+function startGame(){
+
+    const n=parseInt(document.getElementById("numPlayers").value);
+    startPoints=parseInt(document.getElementById("startScore").value);
+
+    players=[];
+
+    for(let i=0;i<n;i++){
+        players.push({
+            name:"Giocatore "+(i+1),
+            score:startPoints
+        });
+    }
+
+    document.getElementById("setup").style.display="none";
+    document.getElementById("game").style.display="block";
+
+    updateUI();
+}
+
+function updateUI(){
+
+    document.getElementById("turnInfo").innerHTML=
+    "Turno di <b>"+players[currentPlayer].name+"</b>";
+
+    document.getElementById("throwCount").innerHTML=
+    "Freccia "+(throws+1)+" di 3";
+
+    let html="";
+
+    players.forEach((p,index)=>{
+
+        html+=`
+        <div class="player ${index===currentPlayer?'current':''}">
+            <h3>${p.name}</h3>
+            <div class="score">${p.score}</div>
+        </div>
+        `;
+    });
+
+    document.getElementById("players").innerHTML=html;
+}
+
+function addThrow(){
+
+    const input=document.getElementById("throwInput");
+
+    let value=parseInt(input.value);
+
+    if(isNaN(value)) return;
+
+    let player=players[currentPlayer];
+
+    let newScore=player.score-value;
+
+    if(newScore<0){
+
+        let excess=Math.abs(newScore);
+
+        player.score=excess;
+
+    }else{
+
+        player.score=newScore;
+    }
+
+    if(player.score===0){
+
+        alert("🏆 Vince "+player.name+"!");
+
+        location.reload();
+        return;
+    }
+
+    players.forEach((p,index)=>{
+
+        if(index!==currentPlayer &&
+           p.score===player.score){
+
+            p.score=startPoints;
+
+            alert(
+              player.name+
+              " ha pareggiato "+
+              p.name+
+              ". "+p.name+
+              " torna a "+
+              startPoints+" punti!"
+            );
+        }
+    });
+
+    throws++;
+
+    if(throws===3){
+
+        throws=0;
+        currentPlayer++;
+
+        if(currentPlayer>=players.length){
+            currentPlayer=0;
+        }
+    }
+
+    input.value="";
+    updateUI();
+}
+
+</script>
+
+</body>
+</html>
