@@ -109,8 +109,8 @@ h3 { margin: 10px 0; font-size: 1.1rem; }
 .sub-nav button {
     background: transparent;
     margin: 0;
-    padding: 10px 5px;
-    font-size: 12px;
+    padding: 10px 2px;
+    font-size: 11px;
     color: #aaa;
     border-radius: 8px;
     flex: 1;
@@ -197,7 +197,7 @@ button:active { transform: scale(0.95); }
 .keyboard-grid .btn-action { background: var(--accent); }
 .info-box { background: #1a237e; border-left: 5px solid var(--room-blue); padding: 12px; border-radius: 12px; font-size: 0.95rem; text-align: left; margin: 10px 0; }
 
-/* Stili specifici per il Tabellone Torneo */
+/* Stili per il Tabellone Torneo */
 .tournament-match {
     background: var(--card-bg); border: 1px solid #444; border-radius: 12px;
     padding: 10px; margin: 8px 0; text-align: left; cursor: pointer;
@@ -229,20 +229,31 @@ button:active { transform: scale(0.95); }
 .team-setup-container { background: #1a1a1a; padding: 12px; border-radius: 12px; margin: 10px 0; border: 1px dashed #555; text-align: left; }
 .team-select-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; font-size: 14px; }
 .team-select-row select { padding: 8px; font-size: 14px; width: auto; flex: 1; margin: 0; }
+
+/* ================= STILI RUOTA DELLA FORTUNA ================= */
+.wheel-wrapper { position: relative; display: flex; flex-direction: column; align-items: center; margin: 15px 0; }
+.wheel-pointer {
+    position: absolute; top: -12px; left: 50%; transform: translateX(-50%);
+    width: 0; height: 0; border-left: 15px solid transparent; border-right: 15px solid transparent;
+    border-top: 25px solid var(--danger); z-index: 10; filter: drop-shadow(0px 2px 4px rgba(0,0,0,0.3));
+}
+canvas#fortuneWheelCanvas { background: transparent; border-radius: 50%; border: 5px solid #fff; box-shadow: 0 4px 15px rgba(0,0,0,0.5); max-width: 100%; height: auto; }
+.wheel-items-box { max-height: 180px; overflow-y: auto; background: #151515; border-radius: 12px; padding: 10px; margin-top: 10px; text-align: left; }
+.wheel-item-input-row { display: flex; gap: 6px; margin-bottom: 6px; align-items: center; }
+.wheel-item-input-row input { padding: 10px; font-size: 14px; margin: 0; text-align: left; }
+.wheel-item-input-row button { padding: 10px; font-size: 14px; margin: 0; width: auto; background: var(--danger); }
 </style>
 </head>
 <body>
 
 <div class="container">
 
-    <!-- ================= STANZA: CAMERA ================= -->
     <div id="room-camera" class="room-panel">
         <h1>🛏️ Camera</h1>
         <p style="color: #aaa;">Gestione spazio notte</p>
         <div class="placeholder-card"><span>⏰</span><h3>Area Libera</h3></div>
     </div>
 
-    <!-- ================= STANZA: SALA ================= -->
     <div id="room-sala" class="room-panel">
         <h1>🛋️ Sala</h1>
         <p style="color: #aaa;">Intrattenimento e Connettività</p>
@@ -256,14 +267,12 @@ button:active { transform: scale(0.95); }
         </div>
     </div>
 
-    <!-- ================= STANZA: CUCINA ================= -->
     <div id="room-cucina" class="room-panel">
         <h1>🍳 Cucina</h1>
         <p style="color: #aaa;">Ricette e Dispensa</p>
         <div class="placeholder-card"><span>🛒</span><h3>Area Libera</h3></div>
     </div>
 
-    <!-- ================= STANZA: CANTINA ================= -->
     <div id="room-cantina" class="room-panel active">
         <h1>🍷 Cantina</h1>
         
@@ -271,9 +280,9 @@ button:active { transform: scale(0.95); }
             <button id="sub-btn-darts" class="active" onclick="switchCantinaMode('darts')">🎯 Freccette</button>
             <button id="sub-btn-tournament" onclick="switchCantinaMode('tournament')">🏆 Champions</button>
             <button id="sub-btn-scoreboard" onclick="switchCantinaMode('scoreboard')">📊 Tabellone</button>
+            <button id="sub-btn-wheel" onclick="switchCantinaMode('wheel')">🎡 Ruota</button>
         </div>
 
-        <!-- SEZIONE INTERNA 1: GIOCO FRECCETTE CLASSICO -->
         <div id="cantina-darts-area">
             <div id="setup">
                 <h2>🎯 Gioco Freccette</h2>
@@ -332,7 +341,6 @@ button:active { transform: scale(0.95); }
             </div>
         </div>
 
-        <!-- SEZIONE INTERNA 2: MOTORE TORNEI CHAMPIONS -->
         <div id="cantina-tournament-area" style="display: none;">
             <div id="t-setup">
                 <h2>🏆 Crea Nuovo Torneo</h2>
@@ -388,7 +396,6 @@ button:active { transform: scale(0.95); }
             </div>
         </div>
 
-        <!-- SEZIONE INTERNA 3: TABELLONE PUNTI GENERALE -->
         <div id="cantina-scoreboard-area" style="display: none;">
             <h2>📊 Tabellone Punti Generale</h2>
             
@@ -404,7 +411,6 @@ button:active { transform: scale(0.95); }
                 <button onclick="applyScoreboardSetup()" style="margin-top:15px; background: var(--room-orange); padding:12px;">Applica / Aggiorna Nomi</button>
             </div>
 
-            <!-- Tasto rapido richiesto per incrementare a tutti le partite -->
             <button onclick="incrementAllGames()" style="background: #252525; border: 2px solid var(--room-blue); color: var(--room-blue); margin-bottom: 10px; padding: 12px; font-size: 15px;">
                 ➕ Incrementa Partite a Tutti (+1)
             </button>
@@ -426,10 +432,26 @@ button:active { transform: scale(0.95); }
             <button class="btn-danger" onclick="resetScoreboardData()" style="margin-top: 15px; padding: 12px; font-size: 14px;">Azzera Dati e Contatori</button>
         </div>
 
+        <div id="cantina-wheel-area" style="display: none;">
+            <h2>🎡 Ruota della Fortuna</h2>
+            
+            <div class="wheel-wrapper">
+                <div class="wheel-pointer"></div>
+                <canvas id="fortuneWheelCanvas" width="360" height="360"></canvas>
+            </div>
+
+            <button id="btnSpinWheel" onclick="spinWheel()" style="background: var(--room-purple); padding: 18px; font-size: 20px; box-shadow: 0 4px 10px rgba(179,136,255,0.3);">🌀 GIRA LA RUOTA!</button>
+
+            <div class="hub-card" style="margin-top: 15px;">
+                <h3 style="margin-top:0; color: var(--room-orange);">⚙️ Personalizza Spicchi</h3>
+                <div class="wheel-items-box" id="wheelItemsContainer"></div>
+                <button onclick="addWheelSlice()" style="background: #252525; color: var(--accent-hover); border: 1px dashed var(--accent); margin-top: 10px; padding: 12px; font-size: 15px;">+ Aggiungi Spicchio</button>
+            </div>
+        </div>
+
     </div>
 </div>
 
-<!-- ================= MODAL TASTIERINO NUMERICO GENERALE (PER TORNEO E TABELLONE) ================= -->
 <div id="genericKeyboardModal" class="modal">
     <div class="modal-content">
         <h3 id="gKybTitle" style="color: var(--room-orange); margin-bottom:5px;">Inserisci Valore</h3>
@@ -446,7 +468,6 @@ button:active { transform: scale(0.95); }
     </div>
 </div>
 
-<!-- MODAL DOPPIO INPUT RISULTATI TORNEO -->
 <div id="matchModal" class="modal">
     <div class="modal-content">
         <h3 id="modalMatchTitle" style="color: var(--room-blue);">Risultati Match</h3>
@@ -469,7 +490,6 @@ button:active { transform: scale(0.95); }
     </div>
 </div>
 
-<!-- BARRA DI NAVIGAZIONE INFERIORE -->
 <nav class="hub-navbar">
     <button class="nav-item" onclick="switchRoom('camera')"><span>🛏️</span>Camera</button>
     <button class="nav-item" onclick="switchRoom('sala')"><span>🛋️</span>Sala</button>
@@ -485,7 +505,7 @@ let scoreboardData = [];
 
 // --- STATO TASTIERINO NUMERICO GLOBALE ---
 let currentGKybInput = "";
-let gKybContext = null; // Memorizza cosa stiamo modificando ('scoreboard', 'tournament_p1', 'tournament_p2')
+let gKybContext = null;
 let gKybCallback = null;
 
 function openGKybModal(title, subtitle, initialVal, context, callback) {
@@ -555,6 +575,8 @@ function switchCantinaMode(mode) {
     document.getElementById('cantina-darts-area').style.display = mode === 'darts' ? 'block' : 'none';
     document.getElementById('cantina-tournament-area').style.display = mode === 'tournament' ? 'block' : 'none';
     document.getElementById('cantina-scoreboard-area').style.display = mode === 'scoreboard' ? 'block' : 'none';
+    document.getElementById('cantina-wheel-area').style.display = mode === 'wheel' ? 'block' : 'none';
+    if(mode === 'wheel') { drawWheel(); }
 }
 let qrCodeGenerated = null;
 function toggleWifiQR() {
@@ -667,7 +689,7 @@ function resetScoreboardData() {
 }
 
 
-// --- SEZIONE 2: MOTORE TORNEI CHAMPIONS / ALTERNANZA & SQUADRE ---
+// --- SEZIONE 2: MOTORE TORNEI CHAMPIONS ---
 let tPlayersRaw = []; let tFinalTeams = []; 
 let tFormat = 'single'; let tNbaTarget = 3;
 let tStructure = { type: '', groups: {}, bracket: { semifinals: [], finale: [] } };
@@ -736,7 +758,6 @@ function rebuildManualTeamsDropdowns() {
     }
 }
 
-// ALGORITMO ROUND-ROBIN PER ALTERNANZA COMPLETA DEI TURNI GARE
 function generateAlternatedMatches(teamList) {
     let list = [...teamList];
     if (list.length % 2 !== 0) { list.push({ name: "BYE_DUMMY", isDummy: true }); }
@@ -745,14 +766,11 @@ function generateAlternatedMatches(teamList) {
     for (let r = 0; r < rounds; r++) {
         for (let i = 0; i < half; i++) {
             let p1 = list[i]; let p2 = list[list.length - 1 - i];
-            if (!p1.isDummy && !p2.isDummy) {
-                matches.push(createMatchObj(p1.name, p2.name));
-            }
+            if (!p1.isDummy && !p2.isDummy) { matches.push(createMatchObj(p1.name, p2.name)); }
         }
-        // Ruota gli elementi mantenendo il primo fermo (Round Robin standard)
         list.splice(1, 0, list.pop());
     }
-    return matches; // Restituisce l'elenco mischiato in modo ottimale per alternare le persone
+    return matches;
 }
 
 function createMatchObj(p1, p2) {
@@ -794,7 +812,7 @@ function startTournament() {
         }
     }
 
-    if (tFinalTeams.length < 2) { alert("Servono almeno 2 entità/squadre per iniziare!"); return; }
+    if (tFinalTeams.length < 2) { alert("Servono almeno 2 entità per iniziare!"); return; }
     buildTournamentStructure();
     
     document.getElementById("t-setup").style.display = "none";
@@ -855,7 +873,7 @@ function renderTournamentBoard() {
     if (tStructure.type === 'GIRONE_UNICO' || tStructure.type === 'CHAMPIONS') {
         for (let gName in tStructure.groups) {
             html += `<h3 class='match-stage-title'>📊 Classifica ${gName}</h3>`;
-            html += `<table class='group-table'><tr><th>Team/Player</th><th>PT</th><th>F</th><th>S</th></tr>`;
+            html += `<table class='group-table'><tr><th>Team</th><th>PT</th><th>F</th><th>S</th></tr>`;
             let sorted = Object.keys(tStructure.groups[gName].players).sort((a,b) => {
                 let pA = tStructure.groups[gName].players[a]; let pB = tStructure.groups[gName].players[b];
                 return pB.pt !== pA.pt ? pB.pt - pA.pt : (pB.gf - pB.gs) - (pA.gf - pA.gs);
@@ -928,7 +946,7 @@ function openGKybForTournament(targetIndex) {
 function closeMatchModal() { document.getElementById("matchModal").style.display = "none"; }
 
 function saveMatchResult() {
-    if (currentModalScore1 === "-" || currentModalScore2 === "-") { alert("Inserisci entrambi i punteggi prima di salvare!"); return; }
+    if (currentModalScore1 === "-" || currentModalScore2 === "-") { alert("Inserisci entrambi i punteggi!"); return; }
     let s1 = parseInt(currentModalScore1); let s2 = parseInt(currentModalScore2);
     let m = activeModalMatch.match;
 
@@ -995,7 +1013,7 @@ function checkBracketAdvancement() {
 function exitTournament() { if(confirm("Annullare il torneo corrente?")) { document.getElementById("t-setup").style.display="block"; document.getElementById("t-board").style.display="none"; } }
 
 
-// --- MOTORE FRECCETTE GARA ---
+// --- MOTORE GARA FRECCETTE ---
 let players = []; let currentPlayer = 0; let throws = 0; let startPoints = 301; let gameMode = 'normal'; let gameHistory = []; let currentModifier = 1; let currentKybValue = "";
 let activeChallenge = null;
 const challenges = [
@@ -1076,8 +1094,127 @@ function endGame() { document.getElementById("game").style.display = "none"; res
 function exitGame() { if(confirm("Annullare?")) resetToSetup(); }
 function resetToSetup() { document.getElementById("setup").style.display = "block"; document.getElementById("game").style.display = "none"; generatePlayerFields(2); }
 
+
+// --- SEZIONE 4: CODICE INTERNO RUOTA DELLA FORTUNA ---
+let wheelSlices = ["Penalità", "Bevi 2", "Salta Turno", "Bevi 1", "Scegli Tu", "Immunità"];
+const wheelColors = ['#f87171', '#fb923c', '#fbbf24', '#a3e635', '#34d399', '#2dd4bf', '#38bdf8', '#818cf8', '#c084fc', '#f472b6'];
+let currentWheelAngle = 0;
+let isWheelSpinning = false;
+
+function buildWheelInputs() {
+    const container = document.getElementById("wheelItemsContainer");
+    container.innerHTML = "";
+    wheelSlices.forEach((slice, idx) => {
+        const row = document.createElement("div");
+        row.className = "wheel-item-input-row";
+        row.innerHTML = `
+            <input type="text" value="${slice}" oninput="updateWheelSliceText(${idx}, this.value)" placeholder="Spicchio ${idx+1}">
+            ${wheelSlices.length > 2 ? `<button onclick="removeWheelSlice(${idx})">❌</button>` : ''}
+        `;
+        container.appendChild(row);
+    });
+}
+function updateWheelSliceText(idx, val) {
+    wheelSlices[idx] = val.trim() || `Spicchio ${idx+1}`;
+    drawWheel();
+}
+function addWheelSlice() {
+    wheelSlices.push(`Premio ${wheelSlices.length + 1}`);
+    buildWheelInputs();
+    drawWheel();
+}
+function removeWheelSlice(idx) {
+    if(wheelSlices.length <= 2) return;
+    wheelSlices.splice(idx, 1);
+    buildWheelInputs();
+    drawWheel();
+}
+function drawWheel() {
+    const canvas = document.getElementById("fortuneWheelCanvas");
+    if(!canvas) return;
+    const ctx = canvas.getContext("2d");
+    const numSegments = wheelSlices.length;
+    const arcSize = (2 * Math.PI) / numSegments;
+    const center = canvas.width / 2;
+    const radius = center - 8;
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    wheelSlices.forEach((text, i) => {
+        const angle = currentWheelAngle + (i * arcSize);
+        
+        ctx.beginPath();
+        ctx.fillStyle = wheelColors[i % wheelColors.length];
+        ctx.moveTo(center, center);
+        ctx.arc(center, center, radius, angle, angle + arcSize);
+        ctx.lineTo(center, center);
+        ctx.fill();
+        ctx.strokeStyle = "#121212";
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        ctx.save();
+        ctx.translate(center, center);
+        ctx.rotate(angle + arcSize / 2);
+        ctx.textAlign = "right";
+        ctx.fillStyle = "#ffffff";
+        ctx.font = "bold 13px sans-serif";
+        
+        // Troncamento se il testo è troppo lungo per lo spicchio
+        let dText = text;
+        const maxW = radius * 0.65;
+        if(ctx.measureText(dText).width > maxW) {
+            while(ctx.measureText(dText + "...").width > maxW && dText.length > 0) { dText = dText.slice(0, -1); }
+            dText += "...";
+        }
+        ctx.fillText(dText, radius - 20, 4);
+        ctx.restore();
+    });
+
+    // Perno Centrale
+    ctx.beginPath();
+    ctx.arc(center, center, 18, 0, 2 * Math.PI);
+    ctx.fillStyle = '#ffffff';
+    ctx.fill();
+    ctx.stroke();
+}
+function spinWheel() {
+    if (isWheelSpinning) return;
+    isWheelSpinning = true;
+    document.getElementById("btnSpinWheel").disabled = true;
+
+    const totalSegments = wheelSlices.length;
+    const speedStart = Math.random() * 12 + 12; 
+    let currentDuration = 0;
+    const maxDuration = Math.random() * 2000 + 3500; 
+
+    function animate() {
+        currentDuration += 20;
+        if (currentDuration >= maxDuration) {
+            isWheelSpinning = false;
+            document.getElementById("btnSpinWheel").disabled = false;
+            
+            // Calcolo finale basato sul puntatore superiore (270°)
+            let deg = (currentWheelAngle * 180 / Math.PI) % 360;
+            if (deg < 0) deg += 360;
+            let relative = 270 - deg;
+            if (relative < 0) relative += 360;
+            
+            const winningIdx = Math.floor((relative / 360) * totalSegments) % totalSegments;
+            setTimeout(() => { alert(`🎡 RISULTATO RUOTA:\n🏆 ${wheelSlices[winningIdx]} 🏆`); }, 200);
+            return;
+        }
+
+        const delta = speedStart * (1 - (currentDuration / maxDuration));
+        currentWheelAngle += (delta * Math.PI / 180);
+        drawWheel();
+        requestAnimationFrame(animate);
+    }
+    animate();
+}
+
 window.onload = function() {
-    generatePlayerFields(2); generateTPlayerFields(4); generateSbPlayerFields(4); applyScoreboardSetup();
+    generatePlayerFields(2); generateTPlayerFields(4); generateSbPlayerFields(4); applyScoreboardSetup(); buildWheelInputs(); drawWheel();
 };
 </script>
 </body>
