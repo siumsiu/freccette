@@ -163,7 +163,7 @@ button:active { transform: scale(0.95); }
 .player-avatar img { width: 100%; height: 100%; object-fit: cover; }
 .player-info-block { display: flex; align-items: center; gap: 10px; }
 
-/* Stili specifici per la Nuova Sezione Tabellone Punti Generale */
+/* Stili per il Tabellone Punti Generale */
 .board-table-wrapper {
     background: var(--card-bg); border-radius: 16px; padding: 10px;
     box-shadow: 0 4px 10px rgba(0,0,0,0.3); overflow-x: auto; margin-top: 15px;
@@ -188,6 +188,7 @@ button:active { transform: scale(0.95); }
 .player-rank { font-size: 0.85rem; color: #aaa; }
 .score { font-size: 1.8rem; font-weight: 900; font-family: monospace; }
 
+/* Tastierino Freccette */
 .custom-keyboard { background: #222; padding: 10px; border-radius: 20px; margin-top: 10px; }
 .display-panel { background: #000; color: var(--accent-hover); font-size: 24px; font-family: monospace; padding: 12px; border-radius: 10px; margin-bottom: 10px; font-weight: bold; }
 .keyboard-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
@@ -209,14 +210,25 @@ button:active { transform: scale(0.95); }
 .group-table th, .group-table td { padding: 8px; text-align: center; border-bottom: 1px solid #333; }
 .group-table th { background: #252525; color: var(--room-orange); }
 
-/* Modal inserimento risultati */
+/* Modals di inserimento e tastierino */
 .modal {
     display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
     background: rgba(0,0,0,0.85); z-index: 10000; align-items: center; justify-content: center;
 }
-.modal-content { background: #222; padding: 20px; border-radius: 16px; width: 90%; max-width: 400px; text-align: center; }
-.modal-scores { display: flex; justify-content: space-around; align-items: center; margin: 20px 0; }
-.modal-scores input { width: 70px; font-size: 24px; padding: 10px; }
+.modal-content { background: #222; padding: 20px; border-radius: 16px; width: 90%; max-width: 400px; text-align: center; box-shadow: 0 4px 20px rgba(0,0,0,0.5); }
+.modal-scores { display: flex; justify-content: space-around; align-items: center; margin: 15px 0; }
+.modal-score-input-box { background: #000; padding: 15px; font-size: 28px; font-family: monospace; color: var(--accent-hover); border-radius: 10px; font-weight: bold; margin-bottom: 15px; min-height: 35px; }
+
+/* Tastierino generico compatto per inserimento punti */
+.generic-keyboard { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 10px; }
+.generic-keyboard button { margin: 0; padding: 18px; font-size: 20px; background: #333; color: white; border-radius: 10px; }
+.generic-keyboard button.btn-key-del { background: var(--danger); }
+.generic-keyboard button.btn-key-ok { background: var(--accent); grid-column: span 3; margin-top: 5px; }
+
+/* Area Selezione Squadre */
+.team-setup-container { background: #1a1a1a; padding: 12px; border-radius: 12px; margin: 10px 0; border: 1px dashed #555; text-align: left; }
+.team-select-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; font-size: 14px; }
+.team-select-row select { padding: 8px; font-size: 14px; width: auto; flex: 1; margin: 0; }
 </style>
 </head>
 <body>
@@ -251,11 +263,10 @@ button:active { transform: scale(0.95); }
         <div class="placeholder-card"><span>🛒</span><h3>Area Libera</h3></div>
     </div>
 
-    <!-- ================= STANZA: CANTINA (Freccette, Tornei & Tabellone Punti) ================= -->
+    <!-- ================= STANZA: CANTINA ================= -->
     <div id="room-cantina" class="room-panel active">
         <h1>🍷 Cantina</h1>
         
-        <!-- Sub-Navigazione interna alla Cantina -->
         <div class="sub-nav">
             <button id="sub-btn-darts" class="active" onclick="switchCantinaMode('darts')">🎯 Freccette</button>
             <button id="sub-btn-tournament" onclick="switchCantinaMode('tournament')">🏆 Champions</button>
@@ -307,7 +318,7 @@ button:active { transform: scale(0.95); }
                     <div id="kybDisplay" class="display-panel">0</div>
                     <div class="keyboard-grid">
                         <button onclick="pressNum(7)">7</button><button onclick="pressNum(8)">8</button><button onclick="pressNum(9)">9</button><button onclick="pressMod(1)" class="btn-mod" id="mod1">1x</button>
-                        <button onclick="pressNum(4)">4</button><button onclick="pressNum(5).">5</button><button onclick="pressNum(6)">6</button><button onclick="pressMod(2)" class="btn-mod" id="mod2">2x</button>
+                        <button onclick="pressNum(4)">4</button><button onclick="pressNum(5)">5</button><button onclick="pressNum(6)">6</button><button onclick="pressMod(2)" class="btn-mod" id="mod2">2x</button>
                         <button onclick="pressNum(1)">1</button><button onclick="pressNum(2)">2</button><button onclick="pressNum(3)">3</button><button onclick="pressMod(3)" class="btn-mod" id="mod3">3x</button>
                         <button onclick="pressClear()" class="btn-danger">C</button><button onclick="pressNum(0)">0</button><button onclick="pressUndo()" class="btn-secondary">↩</button><button onclick="pressEnter()" class="btn-action">OK</button>
                     </div>
@@ -326,6 +337,21 @@ button:active { transform: scale(0.95); }
             <div id="t-setup">
                 <h2>🏆 Crea Nuovo Torneo</h2>
                 
+                <label>Tipo Partecipazione</label>
+                <select id="tTeamType" onchange="onTTeamTypeChange()">
+                    <option value="single_player">Giocatori Singoli</option>
+                    <option value="teams">A Squadre (2 Vs 2)</option>
+                </select>
+
+                <div id="tTeamCompositionArea" style="display:none;" class="team-setup-container">
+                    <label style="font-size:13px; font-weight:bold; color:var(--room-orange);">Formazione Squadre:</label>
+                    <select id="tTeamGenerationMode" onchange="toggleTeamCompositionViews()">
+                        <option value="random">Generazione Casuale</option>
+                        <option value="manual">Componi Manualmente</option>
+                    </select>
+                    <div id="manualTeamsContainer" style="margin-top: 10px; display:none;"></div>
+                </div>
+                
                 <label>Formula Incontri</label>
                 <select id="tMatchFormat" onchange="onTFormatChange()">
                     <option value="single">Partita Secca</option>
@@ -343,9 +369,11 @@ button:active { transform: scale(0.95); }
                 </div>
 
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 15px;">
-                    <label style="margin:0;">Giocatori (2-16)</label>
-                    <button type="button" onclick="adjustTPlayers(1)" style="width:50px; padding:8px; margin:0;">+</button>
-                    <button type="button" onclick="adjustTPlayers(-1)" style="width:50px; padding:8px; margin:0;">-</button>
+                    <label id="tPlayersCountLabel" style="margin:0;">Giocatori (4-16)</label>
+                    <div style="display:flex; gap:5px;">
+                        <button type="button" onclick="adjustTPlayers(1)" style="width:50px; padding:8px; margin:0;">+</button>
+                        <button type="button" onclick="adjustTPlayers(-1)" style="width:50px; padding:8px; margin:0;">-</button>
+                    </div>
                 </div>
                 <div id="tPlayersNamesContainer" style="margin-top: 10px;"></div>
                 <button onclick="startTournament()" style="margin-top:20px; background: var(--room-blue);">Genera Tabellone</button>
@@ -372,9 +400,14 @@ button:active { transform: scale(0.95); }
                         <button type="button" onclick="adjustSbPlayers(-1)" style="width:50px; padding:8px; margin:0; background:#444;">-</button>
                     </div>
                 </div>
-                <div id="sbPlayersNamesContainer" style="margin-top: 15px; max-height: 250px; overflow-y: auto; padding-right: 5px;"></div>
+                <div id="sbPlayersNamesContainer" style="margin-top: 15px; max-height: 200px; overflow-y: auto; padding-right: 5px;"></div>
                 <button onclick="applyScoreboardSetup()" style="margin-top:15px; background: var(--room-orange); padding:12px;">Applica / Aggiorna Nomi</button>
             </div>
+
+            <!-- Tasto rapido richiesto per incrementare a tutti le partite -->
+            <button onclick="incrementAllGames()" style="background: #252525; border: 2px solid var(--room-blue); color: var(--room-blue); margin-bottom: 10px; padding: 12px; font-size: 15px;">
+                ➕ Incrementa Partite a Tutti (+1)
+            </button>
 
             <div class="board-table-wrapper">
                 <table class="board-table">
@@ -387,7 +420,6 @@ button:active { transform: scale(0.95); }
                         </tr>
                     </thead>
                     <tbody id="scoreboardTableBody">
-                        <!-- Generato dinamicamente da JS -->
                     </tbody>
                 </table>
             </div>
@@ -397,30 +429,47 @@ button:active { transform: scale(0.95); }
     </div>
 </div>
 
-<!-- MODAL PER INSERIMENTO RISULTATI PARTITE TORNEO -->
+<!-- ================= MODAL TASTIERINO NUMERICO GENERALE (PER TORNEO E TABELLONE) ================= -->
+<div id="genericKeyboardModal" class="modal">
+    <div class="modal-content">
+        <h3 id="gKybTitle" style="color: var(--room-orange); margin-bottom:5px;">Inserisci Valore</h3>
+        <p id="gKybSubtitle" style="font-size:13px; color:#aaa; margin-top:0;"></p>
+        <div id="gKybDisplay" class="modal-score-input-box">0</div>
+        <div class="generic-keyboard">
+            <button onclick="pressGKyb(7)">7</button><button onclick="pressGKyb(8)">8</button><button onclick="pressGKyb(9)">9</button>
+            <button onclick="pressGKyb(4)">4</button><button onclick="pressGKyb(5)">5</button><button onclick="pressGKyb(6)">6</button>
+            <button onclick="pressGKyb(1)">1</button><button onclick="pressGKyb(2)">2</button><button onclick="pressGKyb(3)">3</button>
+            <button onclick="pressGKyb('C')" class="btn-key-del">C</button><button onclick="pressGKyb(0)">0</button><button onclick="pressGKyb('back')">⌫</button>
+            <button onclick="confirmGKybValue()" class="btn-key-ok">CONFERMA</button>
+        </div>
+        <button onclick="closeGKybModal()" class="btn-secondary" style="margin-top:10px; padding:12px;">Chiudi</button>
+    </div>
+</div>
+
+<!-- MODAL DOPPIO INPUT RISULTATI TORNEO -->
 <div id="matchModal" class="modal">
     <div class="modal-content">
-        <h3 id="modalMatchTitle" style="color: var(--room-orange);">Inserisci Risultato</h3>
+        <h3 id="modalMatchTitle" style="color: var(--room-blue);">Risultati Match</h3>
         <p id="modalMatchFormatDetails" style="font-size:12px; color:#aaa;"></p>
         <div class="modal-scores">
-            <div>
-                <div id="modalTeam1Name" style="font-weight:bold; margin-bottom:5px;">P1</div>
-                <input type="number" id="modalScore1" min="0" placeholder="0">
-            </div>
-            <div style="font-size:24px; font-weight:bold; margin-top:20px;">VS</div>
-            <div>
-                <div id="modalTeam2Name" style="font-weight:bold; margin-bottom:5px;">P2</div>
-                <input type="number" id="modalScore2" min="0" placeholder="0">
-            </div>
+            <button id="btnScoreTarget1" onclick="openGKybForTournament(1)" style="background:#333; padding:15px 5px;">
+                <div id="modalTeam1Name" style="font-size:14px; margin-bottom:5px; text-overflow:ellipsis; overflow:hidden;">P1</div>
+                <div id="modalScoreValue1" style="font-size:24px; color:white; font-family:monospace;">-</div>
+            </button>
+            <div style="font-size:20px; font-weight:bold; padding: 0 10px;">VS</div>
+            <button id="btnScoreTarget2" onclick="openGKybForTournament(2)" style="background:#333; padding:15px 5px;">
+                <div id="modalTeam2Name" style="font-size:14px; margin-bottom:5px; text-overflow:ellipsis; overflow:hidden;">P2</div>
+                <div id="modalScoreValue2" style="font-size:24px; color:white; font-family:monospace;">-</div>
+            </button>
         </div>
         <div style="display:flex; gap:10px;">
             <button onclick="closeMatchModal()" class="btn-secondary">Annulla</button>
-            <button onclick="saveMatchResult()">Conferma</button>
+            <button onclick="saveMatchResult()" style="background:var(--accent);">Salva Match</button>
         </div>
     </div>
 </div>
 
-<!-- BARRA DI NAVIGAZIONE INFERIORE DELL'HUB -->
+<!-- BARRA DI NAVIGAZIONE INFERIORE -->
 <nav class="hub-navbar">
     <button class="nav-item" onclick="switchRoom('camera')"><span>🛏️</span>Camera</button>
     <button class="nav-item" onclick="switchRoom('sala')"><span>🛋️</span>Sala</button>
@@ -429,20 +478,40 @@ button:active { transform: scale(0.95); }
 </nav>
 
 <script>
-// --- CONFIGURAZIONE RETE WI-FI DELLA CASA ---
-const WIFI_SSID = "MIA_RETE_WIFI"; 
-const WIFI_PASSWORD = "PASSWORD_SUPER_SEGRETA";
-const WIFI_ENCRYPTION = "WPA";
+const WIFI_SSID = "MIA_RETE_WIFI"; const WIFI_PASSWORD = "PASSWORD_SUPER_SEGRETA"; const WIFI_ENCRYPTION = "WPA";
 
-// Dizionari temporanei per salvare le immagini caricate (Base64) dei giocatori
-let dartsAvatars = {};
-let tournamentAvatars = {};
-let scoreboardAvatars = {};
-
-// Array globale per i dati del Tabellone Punti
+let dartsAvatars = {}; let tournamentAvatars = {}; let scoreboardAvatars = {};
 let scoreboardData = [];
 
-// --- FUNZIONE GESTIONE IMMAGINI/AVATAR ---
+// --- STATO TASTIERINO NUMERICO GLOBALE ---
+let currentGKybInput = "";
+let gKybContext = null; // Memorizza cosa stiamo modificando ('scoreboard', 'tournament_p1', 'tournament_p2')
+let gKybCallback = null;
+
+function openGKybModal(title, subtitle, initialVal, context, callback) {
+    document.getElementById("gKybTitle").innerText = title;
+    document.getElementById("gKybSubtitle").innerText = subtitle;
+    currentGKybInput = initialVal.toString() === "0" || initialVal.toString() === "-" ? "" : initialVal.toString();
+    document.getElementById("gKybDisplay").innerText = currentGKybInput === "" ? "0" : currentGKybInput;
+    gKybContext = context;
+    gKybCallback = callback;
+    document.getElementById("genericKeyboardModal").style.display = "flex";
+}
+function pressGKyb(val) {
+    if (val === 'C') { currentGKybInput = ""; }
+    else if (val === 'back') { currentGKybInput = currentGKybInput.slice(0, -1); }
+    else { if(currentGKybInput.length < 4) currentGKybInput += val; }
+    document.getElementById("gKybDisplay").innerText = currentGKybInput === "" ? "0" : currentGKybInput;
+}
+function confirmGKybValue() {
+    let num = parseInt(currentGKybInput) || 0;
+    if(gKybCallback) gKybCallback(num);
+    closeGKybModal();
+}
+function closeGKybModal() { document.getElementById("genericKeyboardModal").style.display = "none"; }
+
+
+// --- IMMAGINI / AVATAR ---
 function handleAvatarUpload(input, key, type) {
     if (input.files && input.files[0]) {
         const reader = new FileReader();
@@ -450,12 +519,10 @@ function handleAvatarUpload(input, key, type) {
             let previewId = `dImg_${key}`;
             if(type === 'tournament') previewId = `tImg_${key}`;
             if(type === 'scoreboard') previewId = `sbImg_${key}`;
-            
-            const preview = document.getElementById(previewId);
-            preview.innerHTML = `<img src="${e.target.result}">`;
+            document.getElementById(previewId).innerHTML = `<img src="${e.target.result}">`;
             
             if (type === 'darts') dartsAvatars[key] = e.target.result;
-            else if (type === 'tournament') tournamentAvatars[key] = e.target.result;
+            else if (type === 'tournament') { tournamentAvatars[key] = e.target.result; rebuildManualTeamsDropdowns(); }
             else if (type === 'scoreboard') {
                 scoreboardAvatars[key] = e.target.result;
                 if(scoreboardData[key]) scoreboardData[key].avatar = e.target.result;
@@ -465,246 +532,231 @@ function handleAvatarUpload(input, key, type) {
         reader.readAsDataURL(input.files[0]);
     }
 }
-
 function getAvatarElement(name, imgData) {
-    if (imgData) {
-        return `<div class="player-avatar"><img src="${imgData}"></div>`;
-    }
-    if (name && (name.startsWith("http://") || name.startsWith("https://"))) {
-        return `<div class="player-avatar"><img src="${name}"></div>`;
-    }
-    const initial = name ? name.charAt(0).toUpperCase() : "?";
-    return `<div class="player-avatar">${initial}</div>`;
+    if (imgData) return `<div class="player-avatar"><img src="${imgData}"></div>`;
+    if (name && (name.startsWith("http://") || name.startsWith("https://"))) return `<div class="player-avatar"><img src="${name}"></div>`;
+    return `<div class="player-avatar">${name ? name.charAt(0).toUpperCase() : "?"}</div>`;
 }
-
 function cleanPlayerName(name) {
-    if (name && (name.startsWith("http://") || name.startsWith("https://"))) {
-        return "Web Player";
-    }
+    if (name && (name.startsWith("http://") || name.startsWith("https://"))) return "Web Player";
     return name;
 }
 
-// --- FUNZIONI DI CONNETTIVITÀ (SALA) ---
-let qrCodeGenerated = null;
-function toggleWifiQR() {
-    const wifiBox = document.getElementById("wifi-box");
-    if (wifiBox.style.display === "none") {
-        wifiBox.style.display = "block";
-        if (!qrCodeGenerated) {
-            const qrString = `WIFI:S:${WIFI_SSID};T:${WIFI_ENCRYPTION};P:${WIFI_PASSWORD};;`;
-            qrCodeGenerated = new QRCode(document.getElementById("qrcode-container"), {
-                text: qrString, width: 180, height: 180, colorDark : "#000000", colorLight : "#ffffff", correctLevel : QRCode.CorrectLevel.H
-            });
-        }
-    } else { wifiBox.style.display = "none"; }
-}
-
-function openBluetoothSettings() {
-    if (/iPhone|iPad|iPod/i.test(navigator.userAgent)) { window.location.href = "App-Prefs:root=Bluetooth"; }
-    else { window.location.href = "intent://settings/bluetooth#Intent;scheme=android_shortcut;end"; }
-    setTimeout(() => { alert("Se le impostazioni non si sono aperte, accedi manualmente al menu Bluetooth del tuo dispositivo."); }, 1000);
-}
-
-// --- LOGICA DI NAVIGAZIONE REGOLARE ---
+// --- HUB NAV & COMMONS ---
 function switchRoom(roomName) {
     document.querySelectorAll('.nav-item').forEach(btn => btn.classList.remove('active'));
     event.currentTarget.classList.add('active');
     document.querySelectorAll('.room-panel').forEach(panel => panel.classList.remove('active'));
     document.getElementById(`room-${roomName}`).classList.add('active');
 }
-
 function switchCantinaMode(mode) {
     document.querySelectorAll('.sub-nav button').forEach(btn => btn.classList.remove('active'));
     document.getElementById(`sub-btn-${mode}`).classList.add('active');
-    
     document.getElementById('cantina-darts-area').style.display = mode === 'darts' ? 'block' : 'none';
     document.getElementById('cantina-tournament-area').style.display = mode === 'tournament' ? 'block' : 'none';
     document.getElementById('cantina-scoreboard-area').style.display = mode === 'scoreboard' ? 'block' : 'none';
 }
+let qrCodeGenerated = null;
+function toggleWifiQR() {
+    const wifiBox = document.getElementById("wifi-box");
+    if (wifiBox.style.display === "none") {
+        wifiBox.style.display = "block";
+        if (!qrCodeGenerated) {
+            qrCodeGenerated = new QRCode(document.getElementById("qrcode-container"), {
+                text: `WIFI:S:${WIFI_SSID};T:${WIFI_ENCRYPTION};P:${WIFI_PASSWORD};;`, width: 180, height: 180
+            });
+        }
+    } else { wifiBox.style.display = "none"; }
+}
+function openBluetoothSettings() {
+    if (/iPhone|iPad|iPod/i.test(navigator.userAgent)) { window.location.href = "App-Prefs:root=Bluetooth"; }
+    else { window.location.href = "intent://settings/bluetooth#Intent;scheme=android_shortcut;end"; }
+}
 
 
-// --- SEZIONE 3: MOTORE TABELLONE PUNTI GENERALE ---
+// --- SEZIONE 3: TABELLONE PUNTI GENERALE ---
 function generateSbPlayerFields(count) {
-    const container = document.getElementById("sbPlayersNamesContainer");
-    container.innerHTML = "";
+    const container = document.getElementById("sbPlayersNamesContainer"); container.innerHTML = "";
     let saved = JSON.parse(localStorage.getItem('scoreboard_saved_names')) || [];
     for (let i = 0; i < count; i++) {
         const div = document.createElement("div"); div.className = "player-input-row";
-        
         const avDiv = document.createElement("div"); avDiv.className = "avatar-selector"; avDiv.id = `sbImg_${i}`; 
-        if (scoreboardAvatars[i]) {
-            avDiv.innerHTML = `<img src="${scoreboardAvatars[i]}">`;
-        } else {
-            avDiv.innerText = "📷";
-        }
+        avDiv.innerHTML = scoreboardAvatars[i] ? `<img src="${scoreboardAvatars[i]}">` : "📷";
         const fileInput = document.createElement("input"); fileInput.type = "file"; fileInput.accept = "image/*";
         fileInput.onchange = function() { handleAvatarUpload(this, i, 'scoreboard'); };
-        avDiv.onclick = function() { fileInput.click(); };
-        avDiv.appendChild(fileInput);
+        avDiv.onclick = function() { fileInput.click(); }; avDiv.appendChild(fileInput);
         
         const input = document.createElement("input"); input.type = "text"; input.id = `sbName_${i}`;
-        input.placeholder = `Nome o Link Foto`; input.value = saved[i] || `Giocatore ${i + 1}`;
-        
+        input.placeholder = `Giocatore ${i + 1}`; input.value = saved[i] || `Giocatore ${i + 1}`;
         div.appendChild(avDiv); div.appendChild(input); container.appendChild(div);
     }
 }
-
 function adjustSbPlayers(amount) {
     let current = document.querySelectorAll("#sbPlayersNamesContainer .player-input-row").length || 4;
-    let next = current + amount;
-    if (next >= 2 && next <= 20) {
-        generateSbPlayerFields(next);
-    }
+    let next = current + amount; if (next >= 2 && next <= 20) generateSbPlayerFields(next);
 }
-
 function applyScoreboardSetup() {
     const fields = document.querySelectorAll("#sbPlayersNamesContainer input[type='text']");
-    let names = [];
-    
-    let newScoreboardData = [];
-    
+    let names = []; let newScoreboardData = [];
     fields.forEach((f, i) => {
-        let rawVal = f.value.trim() || `Giocatore ${i+1}`;
-        names.push(rawVal);
-        
-        // Mantieni i vecchi dati numerici se il giocatore esisteva già nello stesso slot
-        let oldData = scoreboardData[i] || { games: 0, points: 0, wins: 0 };
-        
+        let rawVal = f.value.trim() || `Giocatore ${i+1}`; names.push(rawVal);
+        let oldData = scoreboardData.find(x => x.id === i) || { games: 0, points: 0, wins: 0 };
         newScoreboardData.push({
-            id: i,
-            rawName: rawVal,
-            name: cleanPlayerName(rawVal),
-            avatar: scoreboardAvatars[i] || null,
-            games: oldData.games,
-            points: oldData.points,
-            wins: oldData.wins
+            id: i, rawName: rawVal, name: cleanPlayerName(rawVal), avatar: scoreboardAvatars[i] || null,
+            games: oldData.games, points: oldData.points, wins: oldData.wins
         });
     });
-    
     localStorage.setItem('scoreboard_saved_names', JSON.stringify(names));
-    scoreboardData = newScoreboardData;
-    renderScoreboardTable();
+    scoreboardData = newScoreboardData; renderScoreboardTable();
 }
-
 function renderScoreboardTable() {
-    const tbody = document.getElementById("scoreboardTableBody");
-    tbody.innerHTML = "";
-    
+    const tbody = document.getElementById("scoreboardTableBody"); tbody.innerHTML = "";
     if (scoreboardData.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="4" style="color:#666; padding:20px;">Nessun giocatore inserito. Clicca su "Applica" sopra per iniziare.</td></tr>`;
-        return;
+        tbody.innerHTML = `<tr><td colspan="4" style="color:#666; padding:20px;">Nessun giocatore applicato.</td></tr>`; return;
     }
-
-    // Ordina la classifica prima per Vittorie, poi per Punti Totali
-    let sortedData = [...scoreboardData].sort((a, b) => {
-        if(b.wins !== a.wins) return b.wins - a.wins;
-        return b.points - a.points;
-    });
-
+    let sortedData = [...scoreboardData].sort((a, b) => b.wins !== a.wins ? b.wins - a.wins : b.points - a.points);
     sortedData.forEach(p => {
         let av = getAvatarElement(p.rawName, p.avatar);
         const tr = document.createElement("tr");
-        
         tr.innerHTML = `
-            <td>
-                <div class="board-cell-player">
-                    ${av}
-                    <span>${p.name}</span>
-                </div>
-            </td>
+            <td><div class="board-cell-player">${av}<span>${p.name}</span></div></td>
             <td>
                 <div class="board-cell-actions">
-                    <button class="board-btn-inline" onclick="updateSbValue(${p.id}, 'games', -1)">-</button>
+                    <button class="board-btn-inline" onclick="updateSbValueDirect(${p.id}, 'games', -1)">-</button>
                     <span class="board-count-value">${p.games}</span>
-                    <button class="board-btn-inline" onclick="updateSbValue(${p.id}, 'games', 1)">+</button>
+                    <button class="board-btn-inline" onclick="updateSbValueDirect(${p.id}, 'games', 1)">+</button>
                 </div>
             </td>
             <td>
-                <div class="board-cell-actions">
-                    <button class="board-btn-inline" onclick="updateSbValue(${p.id}, 'points', -5)">-</button>
-                    <span class="board-count-value" style="min-width:32px;">${p.points}</span>
-                    <button class="board-btn-inline" onclick="updateSbValue(${p.id}, 'points', 5)">+</button>
-                </div>
+                <button onclick="triggerKybForScoreboard(${p.id}, 'points')" style="background:#151515; margin:0; padding:6px 10px; font-size:14px; font-family:monospace; width:auto; display:inline-block; border-radius:8px; color:white; border:1px solid #333;">
+                    ${p.points}
+                </button>
             </td>
             <td>
                 <div class="board-cell-actions" style="border: 1px solid #444;">
-                    <button class="board-btn-inline" onclick="updateSbValue(${p.id}, 'wins', -1)" style="color:var(--danger);">-</button>
+                    <button class="board-btn-inline" onclick="updateSbValueDirect(${p.id}, 'wins', -1)">-</button>
                     <span class="board-count-value" style="color:gold;">${p.wins}</span>
-                    <button class="board-btn-inline" onclick="updateSbValue(${p.id}, 'wins', 1)" style="color:var(--accent-hover);">+</button>
+                    <button class="board-btn-inline" onclick="updateSbValueDirect(${p.id}, 'wins', 1)">+</button>
                 </div>
             </td>
         `;
         tbody.appendChild(tr);
     });
 }
-
-function updateSbValue(id, field, amount) {
+function updateSbValueDirect(id, field, amount) {
     let p = scoreboardData.find(x => x.id === id);
-    if (p) {
-        p[field] += amount;
-        if (p[field] < 0) p[field] = 0; // Evita numeri negativi
-        renderScoreboardTable();
-    }
+    if(p) { p[field] += amount; if (p[field] < 0) p[field] = 0; renderScoreboardTable(); }
 }
-
+function triggerKybForScoreboard(id, field) {
+    let p = scoreboardData.find(x => x.id === id);
+    if(!p) return;
+    openGKybModal(`Modifica Punti`, p.name, p[field], 'scoreboard', function(newVal) {
+        p[field] = newVal;
+        renderScoreboardTable();
+    });
+}
+function incrementAllGames() {
+    if(scoreboardData.length === 0) return;
+    scoreboardData.forEach(p => p.games += 1);
+    renderScoreboardTable();
+}
 function resetScoreboardData() {
-    if(confirm("Sei sicuro di voler azzerare tutti i punti, le partite e le vittorie del tabellone?")) {
-        scoreboardData.forEach(p => {
-            p.games = 0;
-            p.points = 0;
-            p.wins = 0;
-        });
-        renderScoreboardTable();
+    if(confirm("Azzerare tutti i dati del tabellone?")) {
+        scoreboardData.forEach(p => { p.games = 0; p.points = 0; p.wins = 0; }); renderScoreboardTable();
     }
 }
 
 
-// --- MOTORE TORNEI INTERNO (CHAMPIONS / NBA / GIRONI) ---
-let tPlayers = [];
-let tFormat = 'single';
-let tNbaTarget = 3;
-let tStructure = { type: '', groups: {}, bracket: { quarters: [], semifinals: [], finale: [] } };
+// --- SEZIONE 2: MOTORE TORNEI CHAMPIONS / ALTERNANZA & SQUADRE ---
+let tPlayersRaw = []; let tFinalTeams = []; 
+let tFormat = 'single'; let tNbaTarget = 3;
+let tStructure = { type: '', groups: {}, bracket: { semifinals: [], finale: [] } };
 let activeModalMatch = null;
+let currentModalScore1 = 0; let currentModalScore2 = 0;
 
-function onTFormatChange() {
-    const fmt = document.getElementById("tMatchFormat").value;
-    document.getElementById("tNbaGamesArea").style.display = fmt === 'nba' ? 'block' : 'none';
+function onTTeamTypeChange() {
+    const isTeam = document.getElementById("tTeamType").value === 'teams';
+    document.getElementById("tTeamCompositionArea").style.display = isTeam ? 'block' : 'none';
+    document.getElementById("tPlayersCountLabel").innerText = isTeam ? "Giocatori Totali (Min. 4)" : "Giocatori (2-16)";
+    toggleTeamCompositionViews();
 }
-
+function toggleTeamCompositionViews() {
+    const isTeam = document.getElementById("tTeamType").value === 'teams';
+    const isManual = document.getElementById("tTeamGenerationMode").value === 'manual';
+    document.getElementById("manualTeamsContainer").style.display = (isTeam && isManual) ? 'block' : 'none';
+    if(isTeam && isManual) rebuildManualTeamsDropdowns();
+}
+function onTFormatChange() {
+    document.getElementById("tNbaGamesArea").style.display = document.getElementById("tMatchFormat").value === 'nba' ? 'block' : 'none';
+}
 function generateTPlayerFields(count) {
-    const container = document.getElementById("tPlayersNamesContainer");
-    container.innerHTML = "";
+    const container = document.getElementById("tPlayersNamesContainer"); container.innerHTML = "";
     let saved = JSON.parse(localStorage.getItem('tournament_saved_names')) || [];
     for (let i = 0; i < count; i++) {
         const div = document.createElement("div"); div.className = "player-input-row";
-        
-        // Selettore Foto
         const avDiv = document.createElement("div"); avDiv.className = "avatar-selector"; avDiv.id = `tImg_${i}`; avDiv.innerText = "📷";
         const fileInput = document.createElement("input"); fileInput.type = "file"; fileInput.accept = "image/*";
         fileInput.onchange = function() { handleAvatarUpload(this, i, 'tournament'); };
-        avDiv.onclick = function() { fileInput.click(); };
-        avDiv.appendChild(fileInput);
+        avDiv.onclick = function() { fileInput.click(); }; avDiv.appendChild(fileInput);
         
         const input = document.createElement("input"); input.type = "text"; input.id = `tName_${i}`;
-        input.placeholder = `Partecipante ${i + 1} o Link Foto`; input.value = saved[i] || `Partecipante ${i + 1}`;
-        
+        input.placeholder = `Giocatore ${i + 1}`; input.value = saved[i] || `Giocatore ${i + 1}`;
+        input.onchange = function() { rebuildManualTeamsDropdowns(); };
         div.appendChild(avDiv); div.appendChild(input); container.appendChild(div);
+    }
+    rebuildManualTeamsDropdowns();
+}
+function adjustTPlayers(amount) {
+    let current = document.querySelectorAll("#tPlayersNamesContainer .player-input-row").length || 4;
+    let next = current + amount; 
+    if (next >= 2 && next <= 16) { generateTPlayerFields(next); }
+}
+function rebuildManualTeamsDropdowns() {
+    if(document.getElementById("tTeamType").value !== 'teams' || document.getElementById("tTeamGenerationMode").value !== 'manual') return;
+    const fields = document.querySelectorAll("#tPlayersNamesContainer input[type='text']");
+    let currentNames = []; fields.forEach((f,i) => currentNames.push(f.value.trim() || `Giocatore ${i+1}`));
+    
+    const container = document.getElementById("manualTeamsContainer"); container.innerHTML = "";
+    let numTeams = Math.floor(currentNames.length / 2);
+    if(numTeams < 2) { container.innerHTML = "<p style='font-size:12px; color:var(--danger);'>Inserisci almeno 4 giocatori.</p>"; return; }
+    
+    for(let t=0; t<numTeams; t++) {
+        const row = document.createElement("div"); row.className = "team-select-row";
+        row.innerHTML = `<span style='color:white; min-width:60px;'>Sq. ${t+1}:</span>`;
+        
+        let sel1 = document.createElement("select"); sel1.id = `manual_t${t}_p1`;
+        let sel2 = document.createElement("select"); sel2.id = `manual_t${t}_p2`;
+        
+        currentNames.forEach((name, idx) => {
+            let opt1 = document.createElement("option"); opt1.value = idx; opt1.text = name; if(idx === t*2) opt1.selected = true;
+            let opt2 = document.createElement("option"); opt2.value = idx; opt2.text = name; if(idx === (t*2)+1) opt2.selected = true;
+            sel1.appendChild(opt1); sel2.appendChild(opt2);
+        });
+        row.appendChild(sel1); row.appendChild(sel2); container.appendChild(row);
     }
 }
 
-function adjustTPlayers(amount) {
-    let current = document.querySelectorAll("#tPlayersNamesContainer .player-input-row").length || 4;
-    let next = current + amount;
-    if (next >= 2 && next <= 16) generateTPlayerFields(next);
+// ALGORITMO ROUND-ROBIN PER ALTERNANZA COMPLETA DEI TURNI GARE
+function generateAlternatedMatches(teamList) {
+    let list = [...teamList];
+    if (list.length % 2 !== 0) { list.push({ name: "BYE_DUMMY", isDummy: true }); }
+    let rounds = list.length - 1; let half = list.length / 2; let matches = [];
+    
+    for (let r = 0; r < rounds; r++) {
+        for (let i = 0; i < half; i++) {
+            let p1 = list[i]; let p2 = list[list.length - 1 - i];
+            if (!p1.isDummy && !p2.isDummy) {
+                matches.push(createMatchObj(p1.name, p2.name));
+            }
+        }
+        // Ruota gli elementi mantenendo il primo fermo (Round Robin standard)
+        list.splice(1, 0, list.pop());
+    }
+    return matches; // Restituisce l'elenco mischiato in modo ottimale per alternare le persone
 }
 
 function createMatchObj(p1, p2) {
-    return { p1: p1, p2: p2, score1: null, score2: null, playedGames: 0, p1Wins: 0, p2Wins: 0, logs: [], completed: false };
-}
-
-function getTournamentPlayerAvatar(pName) {
-    let idx = tPlayers.indexOf(pName);
-    return getAvatarElement(pName, tournamentAvatars[idx]);
+    return { p1: p1, p2: p2, score1: null, score2: null, playedGames: 0, p1Wins: 0, p2Wins: 0, completed: false };
 }
 
 function startTournament() {
@@ -712,15 +764,37 @@ function startTournament() {
     tFormat = document.getElementById("tMatchFormat").value;
     tNbaTarget = parseInt(document.getElementById("tNbaTarget").value);
     
-    tPlayers = [];
-    let names = [];
+    tPlayersRaw = []; let savedNames = [];
     fields.forEach((f, i) => {
-        let rawVal = f.value.trim() || `Partecipante ${i+1}`;
-        names.push(rawVal); 
-        tPlayers.push(cleanPlayerName(rawVal));
+        let name = f.value.trim() || `Giocatore ${i+1}`;
+        savedNames.push(name); tPlayersRaw.push(cleanPlayerName(name));
     });
-    localStorage.setItem('tournament_saved_names', JSON.stringify(names));
+    localStorage.setItem('tournament_saved_names', JSON.stringify(savedNames));
 
+    const isTeamMode = document.getElementById("tTeamType").value === 'teams';
+    tFinalTeams = [];
+
+    if (!isTeamMode) {
+        tPlayersRaw.forEach(p => tFinalTeams.push({ name: p }));
+    } else {
+        const genMode = document.getElementById("tTeamGenerationMode").value;
+        if (genMode === 'random') {
+            let shuffled = [...tPlayersRaw].sort(() => 0.5 - Math.random());
+            while(shuffled.length >= 2) {
+                let p1 = shuffled.pop(); let p2 = shuffled.pop();
+                tFinalTeams.push({ name: `${p1} + ${p2}` });
+            }
+        } else {
+            let numTeams = Math.floor(tPlayersRaw.length / 2);
+            for(let t=0; t<numTeams; t++) {
+                let idx1 = document.getElementById(`manual_t${t}_p1`).value;
+                let idx2 = document.getElementById(`manual_t${t}_p2`).value;
+                tFinalTeams.push({ name: `${tPlayersRaw[idx1]} + ${tPlayersRaw[idx2]}` });
+            }
+        }
+    }
+
+    if (tFinalTeams.length < 2) { alert("Servono almeno 2 entità/squadre per iniziare!"); return; }
     buildTournamentStructure();
     
     document.getElementById("t-setup").style.display = "none";
@@ -729,43 +803,43 @@ function startTournament() {
 }
 
 function buildTournamentStructure() {
-    let count = tPlayers.length;
-    tStructure = { type: '', groups: {}, bracket: { quarters: [], semifinals: [], finale: [] } };
+    let count = tFinalTeams.length;
+    tStructure = { type: '', groups: {}, bracket: { semifinals: [], finale: [] } };
 
     if (count === 2) {
         tStructure.type = 'FINALE_DIRETTA';
-        tStructure.bracket.finale.push(createMatchObj(tPlayers[0], tPlayers[1]));
+        tStructure.bracket.finale.push(createMatchObj(tFinalTeams[0].name, tFinalTeams[1].name));
     } 
     else if (count <= 5) {
         tStructure.type = 'GIRONE_UNICO';
         tStructure.groups['Unico'] = { players: {}, matches: [] };
-        tPlayers.forEach(p => tStructure.groups['Unico'].players[p] = { pt: 0, gf: 0, gs: 0 });
+        tFinalTeams.forEach(t => tStructure.groups['Unico'].players[t.name] = { pt: 0, gf: 0, gs: 0 });
         
-        for(let i=0; i<count; i++) {
-            for(let j=i+1; j<count; j++) {
-                tStructure.groups['Unico'].matches.push(createMatchObj(tPlayers[i], tPlayers[j]));
-                if(tFormat === 'double') tStructure.groups['Unico'].matches.push(createMatchObj(tPlayers[j], tPlayers[i]));
-            }
+        let poolMatches = generateAlternatedMatches(tFinalTeams);
+        if(tFormat === 'double') {
+            let returnMatches = generateAlternatedMatches(tFinalTeams).map(m => createMatchObj(m.p2, m.p1));
+            poolMatches = poolMatches.concat(returnMatches);
         }
+        tStructure.groups['Unico'].matches = poolMatches;
     } 
     else {
         tStructure.type = 'CHAMPIONS';
         tStructure.groups['Gruppo A'] = { players: {}, matches: [] };
         tStructure.groups['Gruppo B'] = { players: {}, matches: [] };
 
-        tPlayers.forEach((p, idx) => {
+        tFinalTeams.forEach((team, idx) => {
             let grp = (idx % 2 === 0) ? 'Gruppo A' : 'Gruppo B';
-            tStructure.groups[grp].players[p] = { pt: 0, gf: 0, gs: 0 };
+            tStructure.groups[grp].players[team.name] = { pt: 0, gf: 0, gs: 0 };
         });
 
         ['Gruppo A', 'Gruppo B'].forEach(gName => {
-            let gP = Object.keys(tStructure.groups[gName].players);
-            for(let i=0; i<gP.length; i++) {
-                for(let j=i+1; j<gP.length; j++) {
-                    tStructure.groups[gName].matches.push(createMatchObj(gP[i], gP[j]));
-                    if(tFormat === 'double') tStructure.groups[gName].matches.push(createMatchObj(gP[j], gP[i]));
-                }
+            let gTeams = Object.keys(tStructure.groups[gName].players).map(n => ({ name: n }));
+            let poolMatches = generateAlternatedMatches(gTeams);
+            if(tFormat === 'double') {
+                let returnMatches = generateAlternatedMatches(gTeams).map(m => createMatchObj(m.p2, m.p1));
+                poolMatches = poolMatches.concat(returnMatches);
             }
+            tStructure.groups[gName].matches = poolMatches;
         });
         
         tStructure.bracket.semifinals = [
@@ -778,70 +852,47 @@ function buildTournamentStructure() {
 
 function renderTournamentBoard() {
     let html = "";
-    
     if (tStructure.type === 'GIRONE_UNICO' || tStructure.type === 'CHAMPIONS') {
         for (let gName in tStructure.groups) {
             html += `<h3 class='match-stage-title'>📊 Classifica ${gName}</h3>`;
-            html += `<table class='group-table'><tr><th>Player</th><th>PT</th><th>F</th><th>S</th></tr>`;
-            
+            html += `<table class='group-table'><tr><th>Team/Player</th><th>PT</th><th>F</th><th>S</th></tr>`;
             let sorted = Object.keys(tStructure.groups[gName].players).sort((a,b) => {
                 let pA = tStructure.groups[gName].players[a]; let pB = tStructure.groups[gName].players[b];
-                if(pB.pt !== pA.pt) return pB.pt - pA.pt;
-                return (pB.gf - pB.gs) - (pA.gf - pA.gs);
+                return pB.pt !== pA.pt ? pB.pt - pA.pt : (pB.gf - pB.gs) - (pA.gf - pA.gs);
             });
-
             sorted.forEach(p => {
                 let s = tStructure.groups[gName].players[p];
-                let av = getTournamentPlayerAvatar(p);
-                html += `<tr><td style="display:flex; align-items:center; gap:8px; border:none;">${av}<strong>${p}</strong></td><td>${s.pt}</td><td>${s.gf}</td><td>${s.gs}</td></tr>`;
+                html += `<tr><td style="text-align:left;"><strong>${p}</strong></td><td>${s.pt}</td><td>${s.gf}</td><td>${s.gs}</td></tr>`;
             });
-            html += `</table>`;
-
-            html += `<h3>Matches ${gName}</h3>`;
-            tStructure.groups[gName].matches.forEach((m, idx) => {
-                html += renderMatchCard('group', gName, idx, m);
-            });
+            html += `</table><h3>Incontri (Alternati)</h3>`;
+            tStructure.groups[gName].matches.forEach((m, idx) => { html += renderMatchCard('group', gName, idx, m); });
         }
     }
-
     if (tStructure.type === 'CHAMPIONS' || tStructure.type === 'FINALE_DIRETTA') {
         if(tStructure.bracket.semifinals.length > 0) {
             html += `<div class='match-stage-title'>🔥 Semifinali</div>`;
-            tStructure.bracket.semifinals.forEach((m, idx) => {
-                html += renderMatchCard('bracket', 'semifinals', idx, m);
-            });
+            tStructure.bracket.semifinals.forEach((m, idx) => { html += renderMatchCard('bracket', 'semifinals', idx, m); });
         }
-
         html += `<div class='match-stage-title'>🏆 Finalissima</div>`;
-        tStructure.bracket.finale.forEach((m, idx) => {
-            html += renderMatchCard('bracket', 'finale', idx, m);
-        });
+        tStructure.bracket.finale.forEach((m, idx) => { html += renderMatchCard('bracket', 'finale', idx, m); });
     }
-
     document.getElementById("tStructureOutput").innerHTML = html;
 }
 
 function renderMatchCard(type, section, index, m) {
-    let scoreDisplay1 = m.score1 !== null ? m.score1 : "-";
-    let scoreDisplay2 = m.score2 !== null ? m.score2 : "-";
-    
-    if (tFormat === 'nba') {
-        scoreDisplay1 = `${m.p1Wins} V`; scoreDisplay2 = `${m.p2Wins} V`;
-    } else if (tFormat === 'double' && m.playedGames === 1) {
-        scoreDisplay1 = `${m.score1} (And.)`; scoreDisplay2 = `${m.score2} (And.)`;
-    }
+    let display1 = m.score1 !== null ? m.score1 : "-";
+    let display2 = m.score2 !== null ? m.score2 : "-";
+    if (tFormat === 'nba') { display1 = `${m.p1Wins} V`; display2 = `${m.p2Wins} V`; }
+    else if (tFormat === 'double' && m.playedGames === 1) { display1 = `${m.score1} (And.)`; display2 = `${m.score2} (And.)`; }
 
     let isP1W = m.completed && (m.score1 > m.score2 || m.p1Wins > m.p2Wins);
     let isP2W = m.completed && (m.score2 > m.score1 || m.p2Wins > m.p1Wins);
 
-    let av1 = getTournamentPlayerAvatar(m.p1);
-    let av2 = getTournamentPlayerAvatar(m.p2);
-
     return `
     <div class="tournament-match" onclick="openMatchModal('${type}', '${section}', ${index})">
-        <div class="match-team ${isP1W ? 'winner' : ''}"><div style="display:flex; align-items:center; gap:8px;">${av1}<span>${m.p1}</span></div><span>${scoreDisplay1}</span></div>
-        <div class="match-team ${isP2W ? 'winner' : ''}"><div style="display:flex; align-items:center; gap:8px;">${av2}<span>${m.p2}</span></div><span>${scoreDisplay2}</span></div>
-        ${m.completed ? '<div style="font-size:10px; color:#00c853; text-align:right;">✔ Completato</div>' : ''}
+        <div class="match-team ${isP1W ? 'winner' : ''}"><span>🔹 ${m.p1}</span><span>${display1}</span></div>
+        <div class="match-team ${isP2W ? 'winner' : ''}"><span>🔹 ${m.p2}</span><span>${display2}</span></div>
+        ${m.completed ? '<div style="font-size:10px; color:var(--accent-hover); text-align:right;">✔ Concluso</div>' : ''}
     </div>`;
 }
 
@@ -851,62 +902,61 @@ function openMatchModal(type, section, index) {
 
     document.getElementById("modalTeam1Name").innerText = m.p1;
     document.getElementById("modalTeam2Name").innerText = m.p2;
-    document.getElementById("modalScore1").value = "";
-    document.getElementById("modalScore2").value = "";
+    
+    currentModalScore1 = "-"; currentModalScore2 = "-";
+    document.getElementById("modalScoreValue1").innerText = currentModalScore1;
+    document.getElementById("modalScoreValue2").innerText = currentModalScore2;
 
-    let details = "Formato: Partita Secca";
-    if(tFormat === 'double') details = m.playedGames === 0 ? "Incontro: Gara di Andata" : `Incontro: Gara di Ritorno (Andata: ${m.score1}-${m.score2})`;
-    if(tFormat === 'nba') details = `Serie NBA. Situazione: ${m.p1Wins} - ${m.p2Wins}`;
+    let details = "Partita Secca";
+    if(tFormat === 'double') details = m.playedGames === 0 ? "Andata" : `Ritorno (Andata: ${m.score1}-${m.score2})`;
+    if(tFormat === 'nba') details = `Serie NBA (${m.p1Wins} - ${m.p2Wins})`;
 
-    document.getElementById("modalMatchFormatDetails").innerText = details;
+    document.getElementById("modalMatchFormatDetails").innerText = `Stile: ${details}`;
     document.getElementById("matchModal").style.display = "flex";
+}
+
+function openGKybForTournament(targetIndex) {
+    let currentVal = targetIndex === 1 ? currentModalScore1 : currentModalScore2;
+    let labelName = targetIndex === 1 ? activeModalMatch.match.p1 : activeModalMatch.match.p2;
+    
+    openGKybModal(`Inserisci Punti`, labelName, currentVal === "-" ? 0 : currentVal, 'tournament', function(num) {
+        if(targetIndex === 1) { currentModalScore1 = num; document.getElementById("modalScoreValue1").innerText = num; }
+        else { currentModalScore2 = num; document.getElementById("modalScoreValue2").innerText = num; }
+    });
 }
 
 function closeMatchModal() { document.getElementById("matchModal").style.display = "none"; }
 
 function saveMatchResult() {
-    let s1 = parseInt(document.getElementById("modalScore1").value);
-    let s2 = parseInt(document.getElementById("modalScore2").value);
-    if (isNaN(s1) || isNaN(s2) || s1 < 0 || s2 < 0) { alert("Inserisci punteggi validi!"); return; }
-
+    if (currentModalScore1 === "-" || currentModalScore2 === "-") { alert("Inserisci entrambi i punteggi prima di salvare!"); return; }
+    let s1 = parseInt(currentModalScore1); let s2 = parseInt(currentModalScore2);
     let m = activeModalMatch.match;
 
-    if (tFormat === 'single') {
-        m.score1 = s1; m.score2 = s2; m.completed = true;
-    } 
+    if (tFormat === 'single') { m.score1 = s1; m.score2 = s2; m.completed = true; } 
     else if (tFormat === 'double') {
-        if (m.playedGames === 0) {
-            m.score1 = s1; m.score2 = s2; m.playedGames = 1;
-        } else {
-            m.score1 += s1; m.score2 += s2; m.completed = true;
-            if(m.score1 === m.score2) { alert("Pareggio aggregato! Fate un tiro di spareggio e aggiungete 1 punto al vincitore."); m.completed = false; }
-        }
+        if (m.playedGames === 0) { m.score1 = s1; m.score2 = s2; m.playedGames = 1; } 
+        else { m.score1 += s1; m.score2 += s2; m.completed = true; }
     } 
     else if (tFormat === 'nba') {
-        if(s1 > s2) m.p1Wins++; else if(s2 > s1) m.p2Wins++;
-        m.playedGames++;
-        if (m.p1Wins === tNbaTarget || m.p2Wins === tNbaTarget) { m.completed = true; }
+        if(s1 > s2) m.p1Wins++; else if(s2 > s1) m.p2Wins++; m.playedGames++;
+        if (m.p1Wins === tNbaTarget || m.p2Wins === tNbaTarget) m.completed = true;
     }
 
     if (activeModalMatch.type === 'group') { updateGroupStats(activeModalMatch.section); checkGroupPhaseEnd(); } 
     else { checkBracketAdvancement(); }
 
-    closeMatchModal();
-    renderTournamentBoard();
+    closeMatchModal(); renderTournamentBoard();
 }
 
 function updateGroupStats(gName) {
     let g = tStructure.groups[gName];
     Object.keys(g.players).forEach(p => g.players[p] = { pt: 0, gf: 0, gs: 0 });
-
     g.matches.forEach(m => {
         if(m.completed || (tFormat === 'double' && m.playedGames > 0) || tFormat === 'nba') {
             let p1Score = tFormat === 'nba' ? m.p1Wins : m.score1;
             let p2Score = tFormat === 'nba' ? m.p2Wins : m.score2;
-            
             g.players[m.p1].gf += p1Score; g.players[m.p1].gs += p2Score;
             g.players[m.p2].gf += p2Score; g.players[m.p2].gs += p1Score;
-
             if(m.completed) {
                 if(p1Score > p2Score) g.players[m.p1].pt += 3;
                 else if(p2Score > p1Score) g.players[m.p2].pt += 3;
@@ -915,18 +965,14 @@ function updateGroupStats(gName) {
         }
     });
 }
-
 function checkGroupPhaseEnd() {
     if (tStructure.type !== 'CHAMPIONS') return;
-    let allDone = true;
-    for (let gName in tStructure.groups) { if(tStructure.groups[gName].matches.some(m => !m.completed)) allDone = false; }
-
+    let allDone = true; for (let gName in tStructure.groups) { if(tStructure.groups[gName].matches.some(m => !m.completed)) allDone = false; }
     if(allDone) {
         let getTopTwo = (gName) => {
             return Object.keys(tStructure.groups[gName].players).sort((a,b) => {
                 let pA = tStructure.groups[gName].players[a]; let pB = tStructure.groups[gName].players[b];
-                if(pB.pt !== pA.pt) return pB.pt - pA.pt;
-                return (pB.gf - pB.gs) - (pA.gf - pA.gs);
+                return pB.pt !== pA.pt ? pB.pt - pA.pt : (pB.gf - pB.gs) - (pA.gf - pA.gs);
             }).slice(0, 2);
         };
         let topA = getTopTwo('Gruppo A'); let topB = getTopTwo('Gruppo B');
@@ -934,7 +980,6 @@ function checkGroupPhaseEnd() {
         tStructure.bracket.semifinals[1].p1 = topB[0]; tStructure.bracket.semifinals[1].p2 = topA[1];
     }
 }
-
 function checkBracketAdvancement() {
     if(tStructure.type === 'CHAMPIONS') {
         let semi = tStructure.bracket.semifinals;
@@ -943,45 +988,37 @@ function checkBracketAdvancement() {
     }
     let fin = tStructure.bracket.finale[0];
     if(fin.completed) {
-        let vincitore = (fin.score1 > fin.score2 || fin.p1Wins > fin.p2Wins) ? fin.p1 : fin.p2;
-        setTimeout(() => { alert(`🎉 COMPLIMENTI! ${vincitore} vince il torneo!`); }, 400);
+        let win = (fin.score1 > fin.score2 || fin.p1Wins > fin.p2Wins) ? fin.p1 : fin.p2;
+        setTimeout(() => { alert(`🏆 TORNEO CONCLUSO! Vince: ${win} 🎉`); }, 400);
     }
 }
+function exitTournament() { if(confirm("Annullare il torneo corrente?")) { document.getElementById("t-setup").style.display="block"; document.getElementById("t-board").style.display="none"; } }
 
-function exitTournament() { if(confirm("Annullare il torneo?")) { document.getElementById("t-setup").style.display="block"; document.getElementById("t-board").style.display="none"; } }
 
-
-// --- MOTORE GIOCO FRECCETTE ORIGINALE ---
-let players = []; let currentPlayer = 0; let throws = 0; let startPoints = 301; let gameMode = 'normal'; let gameHistory = []; let podium = []; let currentModifier = 1; let currentKybValue = "";
+// --- MOTORE FRECCETTE GARA ---
+let players = []; let currentPlayer = 0; let throws = 0; let startPoints = 301; let gameMode = 'normal'; let gameHistory = []; let currentModifier = 1; let currentKybValue = "";
+let activeChallenge = null;
 const challenges = [
     { title: "🎯 Cecchino Oscuro", desc: "Avvicinati a quota 99 senza sballare!", target: 99, check: 'closest' },
-    { title: "⚔️ Duello Veloce", desc: "Massimo punteggio lanciando solo 2 freccette per turno!", target: 0, check: 'maxPoints', maxThrows: 2 }
+    { title: "⚔️ Duello Veloce", desc: "Massimo punteggio con 2 freccette per turno!", target: 0, check: 'maxPoints', maxThrows: 2 }
 ];
-let activeChallenge = null;
-
 function onModeChange() {
     const mode = document.getElementById("gameMode").value;
-    const expBox = document.getElementById("modeExplanation"); const scoreArea = document.getElementById("scoreSetupArea");
-    expBox.style.display = "block"; scoreArea.style.display = "block";
-    if (mode === "normal") { expBox.style.display = "none"; } 
-    else if (mode === "challenge") { scoreArea.style.display = "none"; activeChallenge = challenges[Math.floor(Math.random() * challenges.length)]; expBox.innerHTML = `<strong>🎲 Sfida: ${activeChallenge.title}</strong><br>${activeChallenge.desc}`; }
+    document.getElementById("modeExplanation").style.display = mode === "challenge" ? "block" : "none";
+    document.getElementById("scoreSetupArea").style.display = mode === "challenge" ? "none" : "block";
+    if (mode === "challenge") { activeChallenge = challenges[Math.floor(Math.random() * challenges.length)]; document.getElementById("modeExplanation").innerHTML = `<strong>🎲 ${activeChallenge.title}</strong><br>${activeChallenge.desc}`; }
 }
 function toggleCustomScore() { document.getElementById("customStartScore").style.display = (document.getElementById("startScorePreset").value === "custom") ? "block" : "none"; }
-
 function generatePlayerFields(count) {
     const container = document.getElementById("playersNamesContainer"); container.innerHTML = "";
     let savedNames = JSON.parse(localStorage.getItem('darts_saved_names')) || [];
     for (let i = 0; i < count; i++) {
         const div = document.createElement("div"); div.className = "player-input-row";
-        
         const avDiv = document.createElement("div"); avDiv.className = "avatar-selector"; avDiv.id = `dImg_${i}`; avDiv.innerText = "📷";
         const fileInput = document.createElement("input"); fileInput.type = "file"; fileInput.accept = "image/*";
         fileInput.onchange = function() { handleAvatarUpload(this, i, 'darts'); };
-        avDiv.onclick = function() { fileInput.click(); };
-        avDiv.appendChild(fileInput);
-
-        const input = document.createElement("input"); input.type = "text"; input.id = `pName_${i}`; input.placeholder = `Giocatore ${i + 1} o Link Foto`; input.value = savedNames[i] || `Giocatore ${i + 1}`;
-        
+        avDiv.onclick = function() { fileInput.click(); }; avDiv.appendChild(fileInput);
+        const input = document.createElement("input"); input.type = "text"; input.id = `pName_${i}`; input.placeholder = `Giocatore ${i + 1}`; input.value = savedNames[i] || `Giocatore ${i + 1}`;
         div.appendChild(avDiv); div.appendChild(input); container.appendChild(div);
     }
 }
@@ -991,15 +1028,11 @@ function adjustPlayers(amount) {
 }
 function startGame() {
     const fields = document.querySelectorAll("#playersNamesContainer input[type='text']"); gameMode = document.getElementById("gameMode").value;
-    if (gameMode === 'challenge') { startPoints = activeChallenge.target > 0 ? activeChallenge.target : 0; } 
-    else {
-        const pr = document.getElementById("startScorePreset").value;
-        startPoints = pr === "custom" ? parseInt(document.getElementById("customStartScore").value) : parseInt(pr);
-    }
-    players = []; gameHistory = []; podium = []; currentPlayer = 0; throws = 0; let ns = [];
+    startPoints = gameMode === 'challenge' ? (activeChallenge.target > 0 ? activeChallenge.target : 0) : (document.getElementById("startScorePreset").value === "custom" ? parseInt(document.getElementById("customStartScore").value) : parseInt(document.getElementById("startScorePreset").value));
+    players = []; gameHistory = []; currentPlayer = 0; throws = 0; let ns = [];
     fields.forEach((f, idx) => {
         let rawVal = f.value.trim() || `Giocatore ${idx + 1}`; ns.push(rawVal);
-        players.push({ id: idx, name: cleanPlayerName(rawVal), rawName: rawVal, score: (gameMode === 'challenge' && activeChallenge.check === 'maxPoints') ? 0 : startPoints, totalThrows: 0, isEliminated: false });
+        players.push({ id: idx, name: cleanPlayerName(rawVal), rawName: rawVal, score: (gameMode === 'challenge' && activeChallenge.check === 'maxPoints') ? 0 : startPoints, totalThrows: 0 });
     });
     localStorage.setItem('darts_saved_names', JSON.stringify(ns));
     document.getElementById("setup").style.display = "none"; document.getElementById("game").style.display = "block";
@@ -1012,11 +1045,7 @@ function updateUI() {
     let html = "";
     sp.forEach((p, idx) => {
         let av = getAvatarElement(p.rawName, dartsAvatars[p.id]);
-        html += `
-        <div class="player-card ${p.id === ap.id ? 'current' : ''}" style="${p.isEliminated ? 'opacity:0.4;' : ''}">
-            <div class="player-info-block">${av}<div class="player-info"><div class="player-name">${p.name}</div><div class="player-rank">Pos. #${idx + 1}</div></div></div>
-            <div class="score">${p.score}</div>
-        </div>`;
+        html += `<div class="player-card ${p.id === ap.id ? 'current' : ''}"><div class="player-info-block">${av}<div class="player-info"><div class="player-name">${p.name}</div><div class="player-rank">#${idx + 1}</div></div></div><div class="score">${p.score}</div></div>`;
     });
     document.getElementById("players").innerHTML = html;
 }
@@ -1029,33 +1058,26 @@ function pressMod(m) {
     updateKybDisplay();
 }
 function updateKybDisplay() { let nm = parseInt(currentKybValue) || 0; document.getElementById("kybDisplay").innerText = `${nm} x ${currentModifier} = ${nm * currentModifier}`; }
-function pressEnter() {
-    let finalValue = (parseInt(currentKybValue) || 0) * currentModifier; executeThrow(finalValue); resetKeyboard();
-}
+function pressEnter() { let finalValue = (parseInt(currentKybValue) || 0) * currentModifier; executeThrow(finalValue); resetKeyboard(); }
 function executeThrow(val) {
     let p = players[currentPlayer]; gameHistory.push({ playerId: p.id, scoreBefore: p.score, throwValue: val, throwsState: throws, currentPlayerIndex: currentPlayer });
-    p.totalThrows++;
     if (gameMode === 'challenge' && activeChallenge.check === 'maxPoints') p.score += val;
     else { let ns = p.score - val; p.score = ns < 0 ? Math.abs(ns) : ns; }
-
-    if (p.score === 0) { alert(`🎉 ${p.name} vince la partita!`); endGame(); return; }
+    if (p.score === 0) { alert(`🎉 ${p.name} ha vinto!`); endGame(); return; }
     throws++; let mt = (gameMode === 'challenge' && activeChallenge.maxThrows) ? activeChallenge.maxThrows : 3;
     if (throws >= mt) { throws = 0; currentPlayer = (currentPlayer + 1) % players.length; }
     updateUI();
 }
 function pressUndo() {
     if (gameHistory.length === 0) return; let last = gameHistory.pop(); let p = players.find(x => x.id === last.playerId);
-    p.score = last.scoreBefore; p.totalThrows--; currentPlayer = last.currentPlayerIndex; throws = last.throwsState; updateUI(); resetKeyboard();
+    p.score = last.scoreBefore; currentPlayer = last.currentPlayerIndex; throws = last.throwsState; updateUI(); resetKeyboard();
 }
-function endGame() { document.getElementById("game").style.display = "none"; document.getElementById("statsScreen").style.display = "block"; resetToSetup(); }
+function endGame() { document.getElementById("game").style.display = "none"; resetToSetup(); }
 function exitGame() { if(confirm("Annullare?")) resetToSetup(); }
-function resetToSetup() { document.getElementById("setup").style.display = "block"; document.getElementById("game").style.display = "none"; document.getElementById("statsScreen").style.display = "none"; generatePlayerFields(2); }
+function resetToSetup() { document.getElementById("setup").style.display = "block"; document.getElementById("game").style.display = "none"; generatePlayerFields(2); }
 
-window.onload = function() { 
-    generatePlayerFields(2); 
-    generateTPlayerFields(4); 
-    generateSbPlayerFields(4); // Setup iniziale tabellone punti generico
-    applyScoreboardSetup();
+window.onload = function() {
+    generatePlayerFields(2); generateTPlayerFields(4); generateSbPlayerFields(4); applyScoreboardSetup();
 };
 </script>
 </body>
